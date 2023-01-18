@@ -1,0 +1,32 @@
+{% for include in external_includes -%}
+#include "{{include}}"
+{% endfor -%}
+{% for include in standard_includes -%}
+#include <{{include}}>
+{% endfor %}
+
+
+class {{class_name}} 
+{
+{% if public_fields|length > 0 -%}
+public:
+{% for field in public_fields -%}
+{{indent}}{% if field.static %} static{%endif%} {{field.type}} {{field.name}};
+{% endfor -%}
+{%- endif %}
+
+{% if private_fields|length > 0 -%}
+private:
+{% for field in private_fields -%}
+{{indent}}{% if field.static %} static{%endif%} {{field.type}} {{field.name}};
+{% endfor %}
+{%- endif %}
+
+{% if protected_fields|length > 0 -%}
+protected:
+{% for field in protected_fields -%}
+{{indent}}{% if field.static %} static{%endif%} {{field.type}} {{field.name}};
+{% endfor -%}
+{%- endif %}
+{{additional_code}}
+}
