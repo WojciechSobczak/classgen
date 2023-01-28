@@ -1,8 +1,9 @@
 import dataclasses
 
-from ..classgen import CodegenClass
+from ..classgen import Class
 
 @dataclasses.dataclass
-class CPPClass(CodegenClass):
+class CPPClass(Class):
     name: str
+    include_path: str
     fields: list['CPPField']

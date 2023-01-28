@@ -1,0 +1,7 @@
+{{to_class.name}} {{function_name}}(const {{from_class.name}}& from)
+{
+    {{to_class.name}} output;
+    {% for key, value in conversion_mapping.items() %}
+    output.{{key}} = from.{{value}}
+    {% endfor %}
+}

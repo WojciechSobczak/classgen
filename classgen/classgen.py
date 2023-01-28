@@ -1,36 +1,15 @@
-import ast
-import os
+from .base.base import FieldDescriptor
+from .base.base import FieldDescriptor as FD
+from .base.base import Field
+from .base.base import Class
+from .base.base import SelfConversionDescriptor
+from .base.base import ConversionDescriptor
+from .base.base import ASTParser
+from .base.base import ConversionMap
+from .base.base import ConversionGenerator
+from .base.base import CodeGenerator
+from .base.base import extract_classes
 
-class FieldDescriptor:
-    def __init__(self, **kwargs) -> None:
-        pass
-
-class CodegenClass:
-    def __init__(self, name: str) -> None:
-        self.name = name
-        pass
-
-class CodegenField:
-    def __init__(self, name: str) -> None:
-        self.name = name
-        pass
-
-class ASTParser:
-    def parse(self, clazz: ast.ClassDef) -> CodegenClass:
-        return None
-
-class CodeGenerator:
-    def generate_code(self, clazz: CodegenClass, additional_generators: list['CodeGenerator'] = None) -> str:
-        return ""
-    
-def extract_classes(file_path: str, parser: ASTParser) -> list[CodegenClass]:
-    classes: list[CodegenClass]= []
-    with open(file_path, mode="r", encoding="utf-8") as file:
-        tree = ast.parse(file.read())
-        for elem in tree.body:
-            if type(elem) == ast.ClassDef:
-                classes.append(parser.parse(elem))
-    return classes
 
 
 

@@ -1,0 +1,71 @@
+#include <string_view>
+#include <optional>
+#include <cassert>
+#include <array>
+#include <classgen/hash.hpp>
+
+{% if namespace|length > 0 -%}
+namespace {{namespace}} {
+{%- endif %}
+
+class {{enum.name}} {
+public:
+    enum class V {
+        {%- for field in enum.fields %}
+        {{field.name}} = {{enum_value_to_string(field)}}{% if loop.index != enum.fields|length %},{% endif %}
+        {%- endfor %} 
+    };
+
+    using ValuesArray = std::array<V, {{enum.fields|length}}>;
+    using StringsArray = std::array<const std::string_view, {{enum.fields|length}}>;
+
+    constexpr static ValuesArray ALL_VALUES = {
+        {%- for field in enum.fields %}
+        V::{{field.name}}{% if loop.index != enum.fields|length %},{% endif %}
+        {%- endfor %}
+    };
+
+    constexpr static StringsArray ALL_STRINGS = {
+        {%- for field in enum.fields %}
+        std::string_view("{{field.name}}"){% if loop.index != enum.fields|length %},{% endif %}
+        {%- endfor %}
+    };
+
+    constexpr static const ValuesArray& values() {
+        return ALL_VALUES;
+    };
+
+    constexpr static const StringsArray& strings() {
+        return ALL_STRINGS;
+    };
+
+
+    constexpr static std::string_view toString({{enum.name}}::V value) {
+        using namespace std::string_view_literals;
+        switch(value) {
+            {%- for field in enum.fields %}
+            case V::{{field.name}}: return "{{field.name}}"sv;
+            {%- endfor %}
+        }
+        assert(false && "{{namespace}}{{enum.name}} value not handled in toString()");
+    }
+
+    constexpr static std::optional<V> fromString(const std::string_view string) {
+        using namespace std::string_view_literals;
+        constexpr auto hash = classgen::fnv_1a_hash;
+
+        switch(hash(string)) {
+            {%- for field in enum.fields %}
+            case hash("{{field.name}}"sv): return V::{{field.name}};
+            {%- endfor %}
+        }
+        return {};
+    }
+
+{{additional_code}}
+
+};
+
+{% if namespace|length > 0 -%}
+}
+{%- endif %}

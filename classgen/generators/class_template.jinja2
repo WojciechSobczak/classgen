@@ -1,3 +1,7 @@
+{% if namespace|length > 0 -%}
+namespace {{namespace}} {
+{%- endif %}
+
 {% for include in external_includes -%}
 #include "{{include}}"
 {% endfor -%}
@@ -28,5 +32,11 @@ protected:
 {{indent}}{% if field.static %} static{%endif%} {{field.type}} {{field.name}};
 {% endfor -%}
 {%- endif %}
+
 {{additional_code}}
+
+};
+
+{% if namespace|length > 0 -%}
 }
+{%- endif %}

@@ -1,7 +1,8 @@
+from classgen.base.base import CodeGenerator
 from classgen.cpp.cpp_class import CPPClass
 from classgen.cpp.cpp_field import CPPField
 from classgen.cpp.standard_type import StandardType
-from classgen.cpp.cpp_code_generator import CodeGenerator
+from classgen.cpp.templated_type import TemplatedType
 import jinja2
 import textwrap
 import os
@@ -26,6 +27,8 @@ class CPPToJsonStringGenerator(CodeGenerator):
                     return field.name
             if type(field.type) == str or type(field.type) == CPPClass:
                 return f'{field.name}.{self.function_name}()'
+            if type(field.type) == TemplatedType:
+                return f'{field.name}'
             
             raise Exception("Invalid get_set_value() field type")
 

@@ -51,3 +51,24 @@ class StandardType(enum.Enum):
             case StandardType.UINT32: return True
             case StandardType.UINT64: return True
         return False
+    
+
+class StandardCollection(enum.Enum):
+    VECTOR = enum.auto()
+    MAP = enum.auto()
+    SET = enum.auto()
+
+    def __str__(self) -> str:
+        match self:
+            case StandardCollection.VECTOR: return "std::vector"
+            case StandardCollection.MAP: return "std::map"
+            case StandardCollection.MAP: return "std::set"
+            case _: raise Exception("Not handled StandardCollection::__str__() type")
+
+    def get_include(self) -> str:
+        match self:
+            case StandardType.VECTOR: return "vector"
+            case StandardType.MAP: return "map"
+            case StandardType.MAP: return "set"
+            case _: raise Exception("Not handled StandardCollection::get_include() type")
+
