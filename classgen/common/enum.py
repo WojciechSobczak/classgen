@@ -3,24 +3,24 @@
 import dataclasses
 
 @dataclasses.dataclass
-class CPPEnumField:
+class EnumField:
     name: str
 
 @dataclasses.dataclass
-class CPPAutoNumericEnumField(CPPEnumField):
+class AutoNumericEnumField(EnumField):
     pass
 @dataclasses.dataclass
-class CPPConstantNumericEnumField(CPPEnumField):
+class ConstantNumericEnumField(EnumField):
     value: int
 
 @dataclasses.dataclass
-class CPPComplexEnumField(CPPEnumField):
+class ComplexEnumField(EnumField):
     value: dict[str, int | str | float]
 
 @dataclasses.dataclass
-class CPPEnum:
+class Enum:
     name: str
-    fields: list[CPPEnumField]
+    fields: list[EnumField]
 
 
 

@@ -57,8 +57,10 @@ private:
         {% endif %}
         {%- endfor %}
     };
+    {% endif %}
 
 public:
+    {% if struct_definition|length > 0 -%}
     constexpr static const Value& value({{enum.name}}::V value) {
          switch(value) {
             {%- for field in enum.fields %}

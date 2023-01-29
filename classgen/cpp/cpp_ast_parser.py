@@ -1,17 +1,15 @@
 
 from collections import namedtuple
 import dataclasses
-import sys
-
-from .cpp_enum import CPPAutoNumericEnumField, CPPComplexEnumField, CPPConstantNumericEnumField, CPPEnum, CPPEnumField
-from ..classgen import ASTParser
+from classgen.common.ast_parser import ASTParser
+from classgen.common.enum import Enum
+from classgen.common.enum_ast_parser import EnumASTParser
 from .standard_type import StandardType, StandardCollection
 from .templated_type import TemplatedType
 from .access_modifier import AccessModifier
 from .cpp_field import CPPField
 from .cpp_class import CPPClass
 import ast
-import os
 
 class CPPASTParser(ASTParser):
 
@@ -140,12 +138,9 @@ class CPPASTParser(ASTParser):
             static = static,
             access_modifier = access_modifier
         )
-
+    
     def extract_fields(self, class_body: list[ast.stmt]):
-        assignments: list[ast.Assign] = []
-        for assign in class_body:
-            if type(assign) == ast.Assign:
-                assignments.append(assign)
+        assignments = super().extract_fields(class_body)
         fields = []        
         for assignment in assignments:
             field_name = assignment.targets[0].id
@@ -153,111 +148,12 @@ class CPPASTParser(ASTParser):
             fields.append(self.extract_field(field_name, keywords))
         return fields
     
-
-
-    def extract_enum_simple_fields(self, class_body: list[ast.stmt]) -> list[CPPEnumField]:
-        fields: list[CPPEnumField] = []
-        for assign in class_body:
-            match assign:
-                case ast.Assign(
-                    targets = [
-                        ast.Name(id)
-                    ],
-                    value = ast.Constant()
-                ): 
-                    constant: ast.Constant = assign.value
-                    fields.append(CPPConstantNumericEnumField(id, constant.value))
-                case ast.Assign(
-                    targets = [
-                        ast.Name(id)
-                    ],
-                    value = ast.Call(
-                        func = ast.Name(
-                            id = 'auto'
-                        )
-                    )
-                ): 
-                    fields.append(CPPAutoNumericEnumField(id))
-                case ast.Assign(
-                    targets = [
-                        ast.Name(id)
-                    ],
-                    value = ast.Call(
-                        func = ast.Attribute(
-                            value = ast.Name(
-                                id = 'enum'
-                            ),
-                            attr = 'auto'
-                        )
-                    )
-                ): 
-                    fields.append(CPPAutoNumericEnumField(id))
-        return fields
-    
-    def extract_enum_complex_fields(self, class_body: list[ast.stmt]) -> list[CPPEnumField]:
-        fields: list[CPPEnumField] = []
-        for assign in class_body:
-            match assign:
-                case ast.Assign(
-                    targets = [
-                        ast.Name(id)
-                    ],
-                    value = ast.Call(
-                        func = ast.Name(
-                            id = 'object',
-                        ),
-                        keywords = [
-                            ast.keyword(), *_
-                        ]
-                    )
-                ): 
-                    keywords: list[ast.keyword] = assign.value.keywords
-                    arguments: dict[str, str | int | float] = {}
-                    for keyword in keywords:
-                        match keyword:
-                            case ast.keyword(
-                                arg,
-                                value = ast.Constant()
-                            ):
-                                constant: ast.Constant = keyword.value
-                                arguments[str(keyword.arg)] = constant.value
-                    fields.append(CPPComplexEnumField(id, arguments))
-        return fields
-
-    def extract_enum_field(self, class_body: list[ast.stmt]) -> list[CPPEnumField]:
-        simple_fields = self.extract_enum_simple_fields(class_body)
-        complex_fields = self.extract_enum_complex_fields(class_body)
-        if len(simple_fields) != 0 and len(complex_fields):
-            raise Exception("Enum supports only simple or only complex types, not both")
-        return simple_fields if len(simple_fields) > 0 else complex_fields
-        
-
-        
-    
-    def parse(self, clazz: ast.ClassDef) -> CPPClass | CPPEnum:
-        def enum_match():
-            match clazz:
-                case ast.ClassDef(
-                    bases = [
-                        ast.Attribute(
-                            value = ast.Name(
-                                id = 'enum'
-                            ),
-                            attr = 'Enum'
-                        )
-                    ]
-                ): return clazz
-                case ast.ClassDef(
-                    bases = [
-                        ast.Name(
-                            id = 'Enum'
-                        )
-                    ]
-                ): return clazz
-            return None
-        
-        matched = enum_match()
-        if matched != None:
-            return CPPEnum(name=clazz.name, fields=self.extract_enum_field(clazz.body))
-        else:
-            return CPPClass(name=clazz.name, fields=self.extract_fields(clazz.body), include_path="")
+    def parse(self, clazz: ast.ClassDef) -> CPPClass | Enum:
+        enum_parser = EnumASTParser()
+        if enum_parser.is_enum_def(clazz):
+            return enum_parser.parse(clazz)
+        return CPPClass(
+            name=clazz.name, 
+            fields=self.extract_fields(clazz.body), 
+            include_path=""
+        )
