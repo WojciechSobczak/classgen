@@ -2,10 +2,10 @@
 namespace {{namespace}} {
 {%- endif %}
 
-{% for include in external_includes -%}
+{% for include in includes.external_includes -%}
 #include "{{include}}"
 {% endfor -%}
-{% for include in standard_includes -%}
+{% for include in includes.standard_includes -%}
 #include <{{include}}>
 {% endfor %}
 

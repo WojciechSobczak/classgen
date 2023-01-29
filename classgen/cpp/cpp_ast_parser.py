@@ -13,12 +13,20 @@ import ast
 class CPPASTParser(ASTParser):
 
     def _try_parse_standard_type(self, expression: ast.expr) -> CPPStandardType | None:
+        ###Variables just to catch naming error in match clause
+        from . import cpp
+        long_type: str = CPPStandardType
+        short_type: type = cpp.ST
+
         match expression:
             case ast.Attribute(
                 value = ast.Name(
-                    id = 'StandardType' | 'ST'
+                    id = 'CPPStandardType' | 'ST'
                 )
             ): 
+                if expression.value.id not in [CPPStandardType.__name__, 'ST']:
+                    return None
+                
                 return CPPStandardType[expression.attr.upper()]
         return None
 
@@ -36,19 +44,26 @@ class CPPASTParser(ASTParser):
         collection_name: str
         template_args: list[str]
 
-    def _try_parse_call(self, expression: ast.expr) -> _ParseCallResult | None:
+    def _try_parse_templated_collection_call(self, expression: ast.expr) -> _ParseCallResult | None:
+        ###Variables just to catch naming error in match clause
+        from . import cpp
+        template_long_type: str = CPPTemplatedType
+        template_short_type: type = cpp.TT
+        collection_long_type: str = CPPStandardCollection
+        collection_short_type: type = cpp.SC
+
         match expression:
             case ast.Call(
                 func = ast.Name(
-                    id = 'TemplatedType' | 'TT'
+                    id = 'CPPTemplatedType' | 'TT'
                 ),
                 args = [],
                 keywords = [
                     ast.keyword(
-                        arg="type",
+                        arg = "type",
                         value = ast.Attribute(
                             value = ast.Name(
-                                id='StandardCollection' | 'SC',
+                                id = 'CPPStandardCollection' | 'SC',
                             )
                         )
                     ),
@@ -60,6 +75,11 @@ class CPPASTParser(ASTParser):
                     )
                 ]
             ): 
+                if expression.func.id not in [CPPTemplatedType.__name__, 'TT']:
+                    return None
+                if expression.keywords[0].value.value.id not in [CPPStandardCollection.__name__, 'SC']:
+                    return None
+
                 parsed_collection_name = expression.keywords[0].value.attr
                 parsed_template_args: list[ast.expr] = expression.keywords[1].value.elts
 
@@ -89,12 +109,12 @@ class CPPASTParser(ASTParser):
             expression: ast.Name = expression
             return expression.id
             
-        parse_try = self._try_parse_call(expression)
+        parse_try = self._try_parse_templated_collection_call(expression)
         if parse_try is not None:
             template_target = CPPStandardCollection[parse_try.collection_name.upper()]
             return CPPTemplatedType(template_target, parse_try.template_args)
         
-        raise NotImplementedError(f"DIDNT EXPECT _parse_type_expression: {expression}")
+        raise NotImplementedError(f"DIDNT EXPECT _parse_type_expression: {ast.dump(expression)}")
         
 
     def _parse_access_expression(self, expression: ast.expr) -> CPPAccessModifier:
