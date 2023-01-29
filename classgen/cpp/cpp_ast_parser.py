@@ -3,7 +3,7 @@ from collections import namedtuple
 import dataclasses
 import sys
 
-from .cpp_enum import CPPEnum, CPPEnumField
+from .cpp_enum import CPPAutoNumericEnumField, CPPComplexEnumField, CPPConstantNumericEnumField, CPPEnum, CPPEnumField
 from ..classgen import ASTParser
 from .standard_type import StandardType, StandardCollection
 from .templated_type import TemplatedType
@@ -157,9 +157,7 @@ class CPPASTParser(ASTParser):
 
     def extract_enum_simple_fields(self, class_body: list[ast.stmt]) -> list[CPPEnumField]:
         fields: list[CPPEnumField] = []
-        enum_int_value = 0
         for assign in class_body:
-            print(ast.dump(assign))
             match assign:
                 case ast.Assign(
                     targets = [
@@ -168,7 +166,7 @@ class CPPASTParser(ASTParser):
                     value = ast.Constant()
                 ): 
                     constant: ast.Constant = assign.value
-                    fields.append(CPPEnumField(id, constant.value))
+                    fields.append(CPPConstantNumericEnumField(id, constant.value))
                 case ast.Assign(
                     targets = [
                         ast.Name(id)
@@ -179,8 +177,7 @@ class CPPASTParser(ASTParser):
                         )
                     )
                 ): 
-                    fields.append(CPPEnumField(id, enum_int_value))
-                    enum_int_value += 1
+                    fields.append(CPPAutoNumericEnumField(id))
                 case ast.Assign(
                     targets = [
                         ast.Name(id)
@@ -194,42 +191,46 @@ class CPPASTParser(ASTParser):
                         )
                     )
                 ): 
-                    fields.append(CPPEnumField(id, enum_int_value))
-                    enum_int_value += 1
+                    fields.append(CPPAutoNumericEnumField(id))
         return fields
-
-    def extract_enum_field(self, class_body: list[ast.stmt]) -> list[CPPEnumField]:
-        fields = self.extract_enum_simple_fields(class_body)
-        if len(fields) != 0:
-            return fields
+    
+    def extract_enum_complex_fields(self, class_body: list[ast.stmt]) -> list[CPPEnumField]:
+        fields: list[CPPEnumField] = []
         for assign in class_body:
             match assign:
                 case ast.Assign(
                     targets = [
-                        ast.Name(
-                            id
-                        )
+                        ast.Name(id)
                     ],
                     value = ast.Call(
                         func = ast.Name(
                             id = 'object',
-                            keywords = [
-                                ast.keyword(), *_
-                            ]
-                        )
+                        ),
+                        keywords = [
+                            ast.keyword(), *_
+                        ]
                     )
                 ): 
-                    keywords: list[ast.keyword] = assign.value.func.keywords
+                    keywords: list[ast.keyword] = assign.value.keywords
+                    arguments: dict[str, str | int | float] = {}
                     for keyword in keywords:
-                        arguments: dict[str, str | int | float] = []
                         match keyword:
                             case ast.keyword(
+                                arg,
                                 value = ast.Constant()
                             ):
                                 constant: ast.Constant = keyword.value
-                                arguments[keyword.arg] = constant.value
-                        fields.append(CPPEnumField(id, arguments))
+                                arguments[str(keyword.arg)] = constant.value
+                    fields.append(CPPComplexEnumField(id, arguments))
         return fields
+
+    def extract_enum_field(self, class_body: list[ast.stmt]) -> list[CPPEnumField]:
+        simple_fields = self.extract_enum_simple_fields(class_body)
+        complex_fields = self.extract_enum_complex_fields(class_body)
+        if len(simple_fields) != 0 and len(complex_fields):
+            raise Exception("Enum supports only simple or only complex types, not both")
+        return simple_fields if len(simple_fields) > 0 else complex_fields
+        
 
         
     

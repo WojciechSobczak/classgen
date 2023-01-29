@@ -5,7 +5,17 @@ import dataclasses
 @dataclasses.dataclass
 class CPPEnumField:
     name: str
-    value: int | str | dict[str, str | int | float] = None
+
+@dataclasses.dataclass
+class CPPAutoNumericEnumField(CPPEnumField):
+    pass
+@dataclasses.dataclass
+class CPPConstantNumericEnumField(CPPEnumField):
+    value: int
+
+@dataclasses.dataclass
+class CPPComplexEnumField(CPPEnumField):
+    value: dict[str, int | str | float]
 
 @dataclasses.dataclass
 class CPPEnum:

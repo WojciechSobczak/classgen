@@ -2,7 +2,7 @@
 
 from classgen.classgen import CodeGenerator, Class
 from classgen.cpp.cpp_class import CPPClass
-from classgen.cpp.cpp_enum import CPPEnum, CPPEnumField
+from classgen.cpp.cpp_enum import CPPEnum, CPPEnumField, CPPConstantNumericEnumField, CPPAutoNumericEnumField, CPPComplexEnumField
 from classgen.cpp.standard_type import StandardType
 from classgen.cpp.access_modifier import AccessModifier
 from classgen.cpp.utils import is_or_inherit
@@ -21,23 +21,84 @@ class CPPCodeGenerator(CodeGenerator):
         self.namespace = "" if namespace is None else namespace
         self.class_file_map = {} if class_file_map is None else class_file_map
 
+
+    def create_enum_value_struct(self, fields: list[CPPComplexEnumField]) -> dict[str, type]:
+        struct_fields = set()
+        for field in fields:
+            if type(field.value) == dict:
+                struct_fields.update(field.value.keys())
+        if len(struct_fields) > 0:
+            for field in fields:
+                if type(field.value) == dict:
+                    if struct_fields != set(field.value.keys()):
+                        raise Exception("No same enum value objects not supported yet")
+        
+        struct_def: dict[str, type] = {}
+        for field in fields:
+            for key, value in field.value.items():
+                struct_def[key] = type(value)
+        return struct_def
+
     def generate_enum_code(self, enum: CPPEnum):
         if type(enum) != CPPEnum:
             raise Exception("generate_enum_code() requires clazz to be CPPEnum")
         with open(f'{_SCRIPT_PATH}/enum_class_template.jinja2', "r") as file:
             text_template = file.read()
+        
+        simple_fields = [field for field in enum.fields if type(field) != CPPComplexEnumField]
+        complex_fields = [field for field in enum.fields if type(field) == CPPComplexEnumField]
 
-        def enum_value_to_string(value: CPPEnumField) -> str:
-            return str(value.value) if type(value.value) == int else ""
+        if len(simple_fields) > 0 and len(complex_fields) > 0:
+            raise Exception("Complex and non complex fields at the same time are not supported yet")
+
+        def enum_value_to_assignment_string(field: CPPEnumField) -> str:
+            if type(field) == CPPAutoNumericEnumField or type(field) == CPPComplexEnumField:
+                return ""
+            if type(field) == CPPConstantNumericEnumField:
+                field: CPPConstantNumericEnumField = field
+                return " = " + str(field.value)
+            raise Exception(f"enum_value_to_assignment_string NOT IMPLEMENTED TYPE {type(field)}")
+
+        def type_to_string(_type: type) -> str:
+            if _type == str:
+                return "std::string_view"
+            if _type == int:
+                return "int64_t"
+            if _type == float:
+                return "double"
+            raise Exception(f"type_to_string NOT IMPLEMENTED TYPE {_type}")
+        
+        def value_to_string(value) -> str:
+            if type(value) == str:
+                return f'"{value}"'
+            if type(value) == int or type(value) == float:
+                return str(value)
+            raise Exception(f"value_to_string NOT IMPLEMENTED TYPE {type(value)}")
+        def get_full_name(name: str) -> str:
+            output = self.namespace
+            if len(output) != 0:
+                output += "::"
+            output += name
+            return name
+
+
+        struct_definition: dict[str, type] = {}
+        if len(complex_fields) > 0:
+            struct_definition = self.create_enum_value_struct(complex_fields)
 
         environment = jinja2.Environment()
-        environment.globals.update(enum_value_to_string=enum_value_to_string)
+        environment.globals.update(enum_value_to_assignment_string=enum_value_to_assignment_string)
+        environment.globals.update(type_to_string=type_to_string)
+        environment.globals.update(value_to_string=value_to_string)
+        environment.globals.update(get_full_name=get_full_name)
         template = environment.from_string(text_template)
         text = template.render(
             enum = enum,
+            struct_definition = struct_definition,
+            complex_fields = complex_fields,
             indent = "    ",
             additional_code = "",
-            namespace = "Extra"
+            namespace = self.namespace
         )
         return textwrap.dedent(text)
 

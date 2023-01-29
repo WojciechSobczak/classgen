@@ -9,34 +9,73 @@ namespace {{namespace}} {
 {%- endif %}
 
 class {{enum.name}} {
+private:
+    {% if struct_definition|length > 0 -%}
+    struct Value {
+        {%- for name, type in struct_definition.items() %}
+        const {{type_to_string(type)}} {{name}};
+        {%- endfor %} 
+    };
+    {%- endif %}
 public:
     enum class V {
         {%- for field in enum.fields %}
-        {{field.name}} = {{enum_value_to_string(field)}}{% if loop.index != enum.fields|length %},{% endif %}
+        {{field.name}}{{enum_value_to_assignment_string(field)}}
+        {%- if loop.index != enum.fields|length %},{% endif %}
         {%- endfor %} 
     };
 
-    using ValuesArray = std::array<V, {{enum.fields|length}}>;
+    using ValuesArray = std::array<const V, {{enum.fields|length}}>;
     using StringsArray = std::array<const std::string_view, {{enum.fields|length}}>;
-
-    constexpr static ValuesArray ALL_VALUES = {
+    {% if struct_definition|length > 0 -%}
+    using StructsArray = std::array<const Value, {{struct_definition|length}}>;
+    {% endif %}
+private:
+    constexpr static ValuesArray ENUM_VALUES_ARRAY = {
         {%- for field in enum.fields %}
         V::{{field.name}}{% if loop.index != enum.fields|length %},{% endif %}
         {%- endfor %}
     };
-
-    constexpr static StringsArray ALL_STRINGS = {
+    
+    constexpr static StringsArray ENUM_STRINGS_ARRAY = {
         {%- for field in enum.fields %}
-        std::string_view("{{field.name}}"){% if loop.index != enum.fields|length %},{% endif %}
+        "{{field.name}}"{% if loop.index != enum.fields|length %},{% endif %}
         {%- endfor %}
     };
 
+    {% if struct_definition|length > 0 -%}
+    constexpr static StructsArray STRUCT_VALUES = {
+        {% for field in complex_fields -%}
+        {%- set field_items = field.value.items() -%}
+        Value{
+            {%- for name, value in field_items -%}
+            {{value_to_string(value)}}
+            {%- if loop.index != field_items|length %}, {% endif -%}
+            {%- endfor -%}
+        }
+        {%- if loop.index != complex_fields|length %},
+        {% endif %}
+        {%- endfor %}
+    };
+
+public:
+    constexpr static const Value& value({{enum.name}}::V value) {
+         switch(value) {
+            {%- for field in enum.fields %}
+            case V::{{field.name}}: break;
+            {%- endfor %}
+            default: assert(false && "{{get_full_name(enum.name)}}::value(): Invalid enum value provided");
+        }
+        return STRUCT_VALUES[static_cast<int>(value)];
+    };
+    {% endif %}
+
     constexpr static const ValuesArray& values() {
-        return ALL_VALUES;
+        return ENUM_VALUES_ARRAY;
     };
 
     constexpr static const StringsArray& strings() {
-        return ALL_STRINGS;
+        return ENUM_STRINGS_ARRAY;
     };
 
 
@@ -47,7 +86,7 @@ public:
             case V::{{field.name}}: return "{{field.name}}"sv;
             {%- endfor %}
         }
-        assert(false && "{{namespace}}{{enum.name}} value not handled in toString()");
+        assert(false && "{{get_full_name(enum.name)}}::toString(): value not handled");
     }
 
     constexpr static std::optional<V> fromString(const std::string_view string) {
@@ -63,7 +102,6 @@ public:
     }
 
 {{additional_code}}
-
 };
 
 {% if namespace|length > 0 -%}
