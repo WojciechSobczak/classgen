@@ -1,26 +1,25 @@
 
-from collections import namedtuple
 import dataclasses
 from classgen.common.ast_parser import ASTParser
 from classgen.common.enum import Enum
 from classgen.common.enum_ast_parser import EnumASTParser
-from .standard_type import StandardType, StandardCollection
-from .templated_type import TemplatedType
-from .access_modifier import AccessModifier
+from classgen.cpp.cpp_access_modifier import CPPAccessModifier
+from classgen.cpp.cpp_templated_type import CPPTemplatedType
+from .cpp_standard_type import CPPStandardType, CPPStandardCollection
 from .cpp_field import CPPField
 from .cpp_class import CPPClass
 import ast
 
 class CPPASTParser(ASTParser):
 
-    def _try_parse_standard_type(self, expression: ast.expr) -> StandardType | None:
+    def _try_parse_standard_type(self, expression: ast.expr) -> CPPStandardType | None:
         match expression:
             case ast.Attribute(
                 value = ast.Name(
                     id = 'StandardType' | 'ST'
                 )
             ): 
-                return StandardType[expression.attr.upper()]
+                return CPPStandardType[expression.attr.upper()]
         return None
 
     def _try_parse_constant(self, expression: ast.expr) -> str | None:
@@ -77,7 +76,7 @@ class CPPASTParser(ASTParser):
             
         return None
 
-    def _parse_type_expression(self, expression: ast.expr) -> StandardType | TemplatedType | str:
+    def _parse_type_expression(self, expression: ast.expr) -> CPPStandardType | CPPTemplatedType | str:
         parse_try = self._try_parse_standard_type(expression)
         if parse_try is not None:
             return parse_try
@@ -92,13 +91,13 @@ class CPPASTParser(ASTParser):
             
         parse_try = self._try_parse_call(expression)
         if parse_try is not None:
-            template_target = StandardCollection[parse_try.collection_name.upper()]
-            return TemplatedType(template_target, parse_try.template_args)
+            template_target = CPPStandardCollection[parse_try.collection_name.upper()]
+            return CPPTemplatedType(template_target, parse_try.template_args)
         
         raise NotImplementedError(f"DIDNT EXPECT _parse_type_expression: {expression}")
         
 
-    def _parse_access_expression(self, expression: ast.expr) -> AccessModifier:
+    def _parse_access_expression(self, expression: ast.expr) -> CPPAccessModifier:
         match expression:
             case ast.Attribute(
                 value = ast.Name(
@@ -106,7 +105,7 @@ class CPPASTParser(ASTParser):
                 ),
                 attr = str
             ):
-                return AccessModifier[expression.attr.upper()]
+                return CPPAccessModifier[expression.attr.upper()]
         raise NotImplementedError("DIDNT EXPECT _parse_access_expression")
     
     def _parse_static_expression(self, expression: ast.expr) -> bool:
@@ -119,8 +118,8 @@ class CPPASTParser(ASTParser):
         return constant_value
 
     def extract_field(self, name: str, keywords: list[ast.keyword]):
-        field_type: StandardType | str = ""
-        access_modifier = AccessModifier.PUBLIC
+        field_type: CPPStandardType | str = ""
+        access_modifier = CPPAccessModifier.PUBLIC
         static = False
 
         for keyword in keywords:

@@ -2,8 +2,8 @@
 
 from classgen.common.code_generator import CodeGenerator
 from classgen.cpp.cpp_class import CPPClass
-from classgen.cpp.standard_type import StandardType
-from classgen.cpp.access_modifier import AccessModifier
+from classgen.cpp.cpp_standard_type import CPPStandardType
+from classgen.cpp.cpp_access_modifier import CPPAccessModifier
 from classgen.cpp.utils import is_or_inherit
 
 
@@ -31,8 +31,8 @@ class CPPClassCodeGenerator(CodeGenerator):
         external_includes = set()
 
         for field in clazz.fields:
-            if type(field.type) == StandardType:
-                standard_includes.add(StandardType.get_include(field.type))
+            if type(field.type) == CPPStandardType:
+                standard_includes.add(CPPStandardType.get_include(field.type))
             if type(field.type) == CPPClass:
                 external_includes.add(self.class_file_map.get(field.type))
             if type(field.type) == str:
@@ -48,9 +48,9 @@ class CPPClassCodeGenerator(CodeGenerator):
         template = environment.from_string(text_template)
         text = template.render(
             class_name = clazz.name,
-            public_fields = [field for field in clazz.fields if field.access_modifier == AccessModifier.PUBLIC],
-            private_fields = [field for field in clazz.fields if field.access_modifier == AccessModifier.PRIVATE],
-            protected_fields = [field for field in clazz.fields if field.access_modifier == AccessModifier.PROTECTED],
+            public_fields = [field for field in clazz.fields if field.access_modifier == CPPAccessModifier.PUBLIC],
+            private_fields = [field for field in clazz.fields if field.access_modifier == CPPAccessModifier.PRIVATE],
+            protected_fields = [field for field in clazz.fields if field.access_modifier == CPPAccessModifier.PROTECTED],
             indent = "    ",
             additional_code = additional_code,
             standard_includes = standard_includes,

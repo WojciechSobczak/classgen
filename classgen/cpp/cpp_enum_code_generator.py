@@ -3,8 +3,8 @@
 from classgen.classgen import CodeGenerator, Class
 from classgen.cpp.cpp_class import CPPClass
 from classgen.common.enum import Enum, EnumField, ConstantNumericEnumField, AutoNumericEnumField, ComplexEnumField
-from classgen.cpp.standard_type import StandardType
-from classgen.cpp.access_modifier import AccessModifier
+from classgen.cpp.cpp_standard_type import CPPStandardType
+from classgen.cpp.cpp_access_modifier import CPPAccessModifier
 from classgen.cpp.utils import is_or_inherit
 
 
