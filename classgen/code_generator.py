@@ -1,13 +1,5 @@
-
-
-
-
-
-
-
-from classgen.common.common import Class
-from classgen.common.enum import Enum
-
+from classgen.common import Class
+from classgen.enum import Enum
 
 class CodeGenerator:
     def generate_code(self, clazz: Class | Enum, additional_generators: list['CodeGenerator'] = None) -> str:

@@ -1,7 +1,7 @@
 import ast
 
-from classgen.common.common import Class
-from classgen.common.enum import Enum
+from classgen.common import Class
+from classgen.enum import Enum
 
 class ASTParser:
 

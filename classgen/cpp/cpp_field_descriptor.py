@@ -1,7 +1,7 @@
 from classgen.cpp.cpp_access_modifier import CPPAccessModifier
 from classgen.cpp.cpp_standard_type import CPPStandardType
 from classgen.cpp.cpp_templated_type import CPPTemplatedType
-from ..classgen import FieldDescriptor
+from classgen import FieldDescriptor
 
 class CPPFieldDescriptor(FieldDescriptor):
 

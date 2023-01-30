@@ -1,10 +1,11 @@
-
-
-
-
 import ast
-from classgen.common.ast_parser import ASTParser
-from classgen.common.enum import AutoNumericEnumField, ComplexEnumField, ConstantNumericEnumField, Enum, EnumField
+
+from classgen import ASTParser
+from classgen import EnumField
+from classgen import ConstantNumericEnumField
+from classgen import AutoNumericEnumField
+from classgen import ComplexEnumField
+from classgen import Enum
 
 
 class EnumASTParser(ASTParser):
@@ -15,7 +16,7 @@ class EnumASTParser(ASTParser):
             match assign:
                 case ast.Assign(
                     targets = [
-                        ast.Name(id)
+                        ast.Name()
                     ],
                     value = ast.Constant()
                 ): 
@@ -23,7 +24,7 @@ class EnumASTParser(ASTParser):
                     fields.append(ConstantNumericEnumField(id, constant.value))
                 case ast.Assign(
                     targets = [
-                        ast.Name(id)
+                        ast.Name
                     ],
                     value = ast.Call(
                         func = ast.Name(
@@ -34,7 +35,7 @@ class EnumASTParser(ASTParser):
                     fields.append(AutoNumericEnumField(id))
                 case ast.Assign(
                     targets = [
-                        ast.Name(id)
+                        ast.Name
                     ],
                     value = ast.Call(
                         func = ast.Attribute(
@@ -54,7 +55,7 @@ class EnumASTParser(ASTParser):
             match assign:
                 case ast.Assign(
                     targets = [
-                        ast.Name(id)
+                        ast.Name
                     ],
                     value = ast.Call(
                         func = ast.Name(
@@ -70,8 +71,7 @@ class EnumASTParser(ASTParser):
                     for keyword in keywords:
                         match keyword:
                             case ast.keyword(
-                                arg,
-                                value = ast.Constant()
+                                value = ast.Constant
                             ):
                                 constant: ast.Constant = keyword.value
                                 arguments[str(keyword.arg)] = constant.value
@@ -81,7 +81,7 @@ class EnumASTParser(ASTParser):
     def extract_enum_field(self, class_body: list[ast.stmt]) -> list[EnumField]:
         simple_fields = self.extract_enum_simple_fields(class_body)
         complex_fields = self.extract_enum_complex_fields(class_body)
-        if len(simple_fields) != 0 and len(complex_fields):
+        if len(simple_fields) != 0 and len(complex_fields) != 0:
             raise Exception("Enum supports only simple or only complex types, not both")
         return simple_fields if len(simple_fields) > 0 else complex_fields
     
@@ -106,9 +106,9 @@ class EnumASTParser(ASTParser):
             ): return True
         return False
     
-    def parse(self, clazz: ast.ClassDef) -> Enum:
-        if self.is_enum_def(clazz) != None:
-            return Enum(name=clazz.name, fields=self.extract_enum_field(clazz.body))
+    def parse(self, class_def: ast.ClassDef) -> Enum:
+        if self.is_enum_def(class_def) != None:
+            return Enum(name=class_def.name, fields=self.extract_enum_field(class_def.body))
         else:
             raise Exception("Given ast.ClassDef does not match enum definition")
 

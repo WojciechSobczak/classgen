@@ -1,22 +1,23 @@
-
+import ast
 import dataclasses
-from classgen.common.ast_parser import ASTParser
-from classgen.common.enum import Enum
-from classgen.common.enum_ast_parser import EnumASTParser
+
 from classgen.cpp.cpp_access_modifier import CPPAccessModifier
 from classgen.cpp.cpp_templated_type import CPPTemplatedType
-from .cpp_standard_type import CPPStandardType, CPPStandardCollection
-from .cpp_field import CPPField
-from .cpp_class import CPPClass
-import ast
+from classgen.cpp.cpp_standard_type import CPPStandardType, CPPStandardCollection
+from classgen.cpp.cpp_field import CPPField
+from classgen.cpp.cpp_class import CPPClass
+
+from classgen.ast_parser import ASTParser
+from classgen.enum import Enum
+from classgen.enum_ast_parser import EnumASTParser
 
 class CPPASTParser(ASTParser):
 
     def _try_parse_standard_type(self, expression: ast.expr) -> CPPStandardType | None:
         ###Variables just to catch naming error in match clause
-        from . import cpp
-        long_type: str = CPPStandardType
-        short_type: type = cpp.ST
+        from classgen import cpp         #pylint: disable=import-outside-toplevel
+        long_type: str = CPPStandardType #pylint: disable=unused-variable
+        short_type: type = cpp.ST        #pylint: disable=unused-variable
 
         match expression:
             case ast.Attribute(
@@ -32,9 +33,7 @@ class CPPASTParser(ASTParser):
 
     def _try_parse_constant(self, expression: ast.expr) -> str | None:
         match expression:
-            case ast.Constant(
-                value = str
-            ):
+            case ast.Constant:
                 return expression.value
         return None
     
@@ -46,11 +45,11 @@ class CPPASTParser(ASTParser):
 
     def _try_parse_templated_collection_call(self, expression: ast.expr) -> _ParseCallResult | None:
         ###Variables just to catch naming error in match clause
-        from . import cpp
-        template_long_type: str = CPPTemplatedType
-        template_short_type: type = cpp.TT
-        collection_long_type: str = CPPStandardCollection
-        collection_short_type: type = cpp.SC
+        from classgen import cpp                          #pylint: disable=import-outside-toplevel
+        template_long_type: str = CPPTemplatedType        #pylint: disable=unused-variable
+        template_short_type: type = cpp.TT                #pylint: disable=unused-variable
+        collection_long_type: str = CPPStandardCollection #pylint: disable=unused-variable
+        collection_short_type: type = cpp.SC              #pylint: disable=unused-variable
 
         match expression:
             case ast.Call(
@@ -86,7 +85,7 @@ class CPPASTParser(ASTParser):
                 output_template_args = []
                 for arg in parsed_template_args:
                     match arg:
-                        case ast.Name(id): 
+                        case ast.Name(): 
                             output_template_args.append(arg.id) 
                             break
                         case _:
@@ -122,8 +121,7 @@ class CPPASTParser(ASTParser):
             case ast.Attribute(
                 value = ast.Name(
                     id = 'AccessModifier'
-                ),
-                attr = str
+                )
             ):
                 return CPPAccessModifier[expression.attr.upper()]
         raise NotImplementedError("DIDNT EXPECT _parse_access_expression")
@@ -167,12 +165,12 @@ class CPPASTParser(ASTParser):
             fields.append(self.extract_field(field_name, keywords))
         return fields
     
-    def parse(self, clazz: ast.ClassDef) -> CPPClass | Enum:
+    def parse(self, class_def: ast.ClassDef) -> CPPClass | Enum:
         enum_parser = EnumASTParser()
-        if enum_parser.is_enum_def(clazz):
-            return enum_parser.parse(clazz)
+        if enum_parser.is_enum_def(class_def):
+            return enum_parser.parse(class_def)
         return CPPClass(
-            name=clazz.name, 
-            fields=self.extract_fields(clazz.body), 
+            name=class_def.name, 
+            fields=self.extract_fields(class_def.body), 
             include_path=""
         )

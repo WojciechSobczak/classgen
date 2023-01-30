@@ -1,0 +1,2 @@
+include classgen/cpp/templates/*.jinja2
+include classgen/cpp/generators/*.jinja2

@@ -1,14 +1,10 @@
 
 
-from classgen.common.code_generator import CodeGenerator
-from classgen.common.enum import Enum
 from classgen.cpp.cpp_class import CPPClass
 from classgen.cpp.cpp_class_code_generator import CPPClassCodeGenerator
 from classgen.cpp.cpp_enum_code_generator import CPPEnumCodeGenerator
-
-
-
-
+from classgen import CodeGenerator
+from classgen import Enum
 class CPPCodeGenerator(CodeGenerator):
 
     def generate_code(self, clazz: CPPClass | Enum, additional_generators: list['CodeGenerator'] = None) -> str:

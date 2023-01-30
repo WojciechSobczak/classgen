@@ -1,12 +1,6 @@
-
-
-from classgen.classgen import CodeGenerator, Class
+from classgen import CodeGenerator
 from classgen.cpp.cpp_class import CPPClass
-from classgen.common.enum import Enum, EnumField, ConstantNumericEnumField, AutoNumericEnumField, ComplexEnumField
-from classgen.cpp.cpp_standard_type import CPPStandardType
-from classgen.cpp.cpp_access_modifier import CPPAccessModifier
-from classgen.cpp.utils import is_or_inherit
-
+from classgen.enum import Enum, EnumField, ConstantNumericEnumField, AutoNumericEnumField, ComplexEnumField
 
 import textwrap
 import jinja2

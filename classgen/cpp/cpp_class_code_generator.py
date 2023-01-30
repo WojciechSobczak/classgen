@@ -1,7 +1,7 @@
 
 
 import dataclasses
-from classgen.common.code_generator import CodeGenerator
+from classgen.code_generator import CodeGenerator
 from classgen.cpp.cpp_class import CPPClass
 from classgen.cpp.cpp_field import CPPField
 from classgen.cpp.cpp_standard_type import CPPStandardType

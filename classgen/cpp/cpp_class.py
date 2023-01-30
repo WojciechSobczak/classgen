@@ -1,6 +1,6 @@
 import dataclasses
 
-from ..classgen import Class
+from classgen import Class
 
 @dataclasses.dataclass
 class CPPClass(Class):
