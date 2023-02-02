@@ -1,9 +1,7 @@
-std::string {{function_name}}()
-{
-    constexpr std::string_view intend = "    ";
+std::string {{function_name}}() {
     std::string result = "{";
     {% for field in clazz.fields -%}
-    result += std::string(intend) + "\"{{field.name}}\": " + {{get_set_value(field)}};
+    result += "    \"{{field.name}}\": " + {{get_set_value(field)}};
     {% endfor -%}
     result = "}";
     return result;

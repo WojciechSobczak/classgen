@@ -8,7 +8,7 @@ import os
 
 _SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 
-class CPPEnumCodeGenerator(CodeGenerator):
+class CPPEnumCodeGenerator:
 
     def __init__(self, namespace: str = "", class_file_map: dict[CPPClass, str] = None) -> None:
         super().__init__()
@@ -33,7 +33,7 @@ class CPPEnumCodeGenerator(CodeGenerator):
                 struct_def[key] = type(value)
         return struct_def
 
-    def generate_code(self, enum: Enum, additional_generators: list['CodeGenerator'] = None) -> str:
+    def generate_code(self, enum: Enum, additional_generators: list['CodeGenerator']) -> str:
         if type(enum) != Enum:
             raise Exception(f"{self.__class__.__name__} requires clazz to be Enum")
         

@@ -1,11 +1,12 @@
 import dataclasses
-from .cpp_standard_type import CPPStandardType
+
+from classgen.cpp.cpp_type import CPPType
 from .cpp_access_modifier import CPPAccessModifier
-from .cpp_class import CPPClass
 
 @dataclasses.dataclass
 class CPPField:
     name: str
-    type: CPPStandardType | CPPClass | str
+    type: CPPType
     static: bool
+    const: bool
     access_modifier: CPPAccessModifier

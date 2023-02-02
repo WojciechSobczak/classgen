@@ -9,31 +9,37 @@ namespace {{namespace}} {
 #include <{{include}}>
 {% endfor %}
 
+{% macro generate_fields(fields) -%}
+    {% for field in fields -%}
+        {% if field.static %}static {%endif%}{{field.type.name}} {{field.name}};
+    {% endfor %}
+{% endmacro %}
+
 
 class {{class_name}} 
 {
 {% if public_fields|length > 0 -%}
 public:
-{% for field in public_fields -%}
-{{indent}}{% if field.static %} static{%endif%} {{field.type}} {{field.name}};
-{% endfor -%}
-{%- endif %}
+    {{generate_fields(public_fields)}}
+{%- endif -%}
 
 {% if private_fields|length > 0 -%}
 private:
-{% for field in private_fields -%}
-{{indent}}{% if field.static %} static{%endif%} {{field.type}} {{field.name}};
-{% endfor %}
-{%- endif %}
+    {{generate_fields(private_fields)}}
+{%- endif -%}
 
 {% if protected_fields|length > 0 -%}
 protected:
-{% for field in protected_fields -%}
-{{indent}}{% if field.static %} static{%endif%} {{field.type}} {{field.name}};
-{% endfor -%}
-{%- endif %}
+    {{generate_fields(protected_fields)}}
+{%- endif -%}
 
-{{additional_code}}
+
+public:
+{% if additional_generated_codes|length > 0 -%}
+    {%- for code in additional_generated_codes -%}
+        {{code|indent(4, True)}}
+    {%- endfor -%}
+{% endif %}
 
 };
 

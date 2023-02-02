@@ -1,17 +1,16 @@
 from classgen.cpp.cpp_access_modifier import CPPAccessModifier
-from classgen.cpp.cpp_standard_type import CPPStandardType
-from classgen.cpp.cpp_templated_type import CPPTemplatedType
 from classgen import FieldDescriptor
+from classgen.cpp.cpp_type import CPPType
 
 class CPPFieldDescriptor(FieldDescriptor):
 
     def __init__(self, 
         static: bool = False, 
         access: CPPAccessModifier = CPPAccessModifier.PUBLIC, 
-        type: CPPStandardType | CPPTemplatedType | str = None
+        field_type: CPPType = None
     ) -> None:
         self.static = static
         self.access = access
-        self.type = type
-        if self.type == None:
+        self.field_type = field_type
+        if self.field_type == None:
             raise Exception("Type must be specified")
