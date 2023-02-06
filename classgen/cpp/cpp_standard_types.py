@@ -55,6 +55,11 @@ class CPPDouble(CPPType):
         super().__init__("double")
 
 @dataclasses.dataclass
+class CPPBool(CPPType):
+    def __init__(self):
+        super().__init__("bool")
+
+@dataclasses.dataclass
 class CPPString(CPPType):
     def __init__(self):
         super().__init__("std::string", "string")
@@ -67,18 +72,29 @@ class CPPStringView(CPPType):
 @dataclasses.dataclass
 class CPPVector(CPPTemplatedType):
     def __init__(self, args: list[CPPType]):
-        super().__init__("std::vector", "vector", args)
+        super().__init__("std::vector", "vector", args) #pylint: disable=too-many-function-args
 
 @dataclasses.dataclass
 class CPPMap(CPPTemplatedType):
     def __init__(self, args: list[CPPType]):
-        super().__init__("std::map", "map", args)
+        super().__init__("std::map", "map", args) #pylint: disable=too-many-function-args
+
+    @property
+    def key_type(self) -> CPPType:
+        return self.args[0]
+    
+    @property
+    def value_type(self) -> CPPType:
+        return self.args[1]
 
 @dataclasses.dataclass
 class CPPSet(CPPTemplatedType):
     def __init__(self, args: list[CPPType]):
-        super().__init__("std::set", "set", args)
+        super().__init__("std::set", "set", args) #pylint: disable=too-many-function-args
 
+    @property
+    def value_type(self) -> CPPType:
+        return self.args[0]
 
 def is_numerical(_type: type) -> bool:
     match _type:
@@ -98,6 +114,7 @@ def is_standard(_type: type):
     if is_numerical(_type):
         return True
     match _type:
+        case CPPBool(): return True
         case CPPString(): return True
         case CPPStringView(): return True
         case CPPVector(): return True

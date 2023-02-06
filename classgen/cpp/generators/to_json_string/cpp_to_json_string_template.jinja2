@@ -1,0 +1,16 @@
+std::string {{function_name}}() const {
+    {%- for field in templated_fields %}
+    const std::string {{field.name}} = {{get_to_string_value_format(field.type, field.name)|indent(4)}};
+    {% endfor %}
+    const static std::string newLine = ",\n";
+    std::string result = "{";
+    {%- for field in all_fields -%}
+    {%- if field.name not in templated_fields_names %}
+    result += "    \"{{field.name}}\": " + {{get_to_string_value_format(field.type, field.name, 'this->')}} + newLine;
+    {%- else %}
+    result += "    \"{{field.name}}\": " + {{field.name}} + newLine;
+    {%- endif -%}
+    {%- endfor %}
+    result = "}";
+    return result;
+}

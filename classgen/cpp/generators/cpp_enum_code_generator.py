@@ -1,10 +1,10 @@
-from classgen import CodeGenerator
-from classgen.cpp.cpp_class import CPPClass
-from classgen.enum import Enum, EnumField, ConstantNumericEnumField, AutoNumericEnumField, ComplexEnumField
-
 import textwrap
 import jinja2
 import os
+
+from classgen import CodeGenerator
+from classgen.cpp.cpp_class import CPPClass
+from classgen.enum import Enum, EnumField, ConstantNumericEnumField, AutoNumericEnumField, ComplexEnumField
 
 _SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 

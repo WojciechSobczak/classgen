@@ -5,8 +5,8 @@ from classgen.code_generator import CodeGenerator
 from classgen.cpp.cpp_class import CPPClass
 from classgen.cpp.cpp_field import CPPField
 from classgen.cpp.cpp_access_modifier import CPPAccessModifier
+from classgen.cpp.cpp_templated_type import CPPTemplatedType
 from classgen.cpp.cpp_type import CPPType
-from classgen.utils import is_or_inherit
 from classgen.cpp.cpp_standard_types import is_standard
 
 
@@ -28,12 +28,11 @@ class CPPClassCodeGenerator:
         external_includes = set()
 
         for field in fields:
-            if not is_or_inherit(field.type, CPPType):
+            if not issubclass(type(field.type), CPPType):
                 raise Exception("ONLY CPP TYPES PLS")
-            if is_standard(field.type): 
-                standard_includes.add(field.type.include_path)
-            else:
-                external_includes.add(field.type.include_path)
+            collection = standard_includes if is_standard(field.type) else external_includes
+            if field.type.include_path is not None:
+                collection.add(field.type.include_path)
 
         return self.Includes(list(standard_includes), list(external_includes))
 
@@ -47,11 +46,34 @@ class CPPClassCodeGenerator:
 
         additional_generated_codes = []
         for generator in additional_generators:
-            if is_or_inherit(generator, CodeGenerator):
-                additional_generated_codes.append(generator.generate_code(clazz))
+            if not issubclass(type(generator), CodeGenerator):
+                raise Exception(f"Delivered code generator is of type: {type(generator)} and should be {CodeGenerator}")
+            additional_generated_codes.append(generator.generate_code(clazz))
+
+        def get_field_value_formatted(field_value):
+            if field_value == None:
+                raise Exception("None field value. Cannot be formatted.")
+            if type(field_value) in { int, float }:
+                return field_value
+            else:
+                return f'"{field_value}"'
+            
+        def format_field_type(field_type: CPPType):
+            formatted_type = field_type.name
+            if issubclass(type(field_type), CPPTemplatedType):
+                field_type: CPPTemplatedType = field_type
+                args_type_names = []
+                for arg in field_type.args:
+                    args_type_names.append(arg.name)
+                formatted_type +=f'<{", ".join(args_type_names)}>'
+            return formatted_type
 
         environment = jinja2.Environment()
         template = environment.from_string(text_template)
+        environment.globals.update(
+            get_field_value_formatted = get_field_value_formatted,
+            format_field_type = format_field_type
+        )
         text = template.render(
             class_name = clazz.name,
             public_fields = [field for field in clazz.fields if field.access_modifier == CPPAccessModifier.PUBLIC],

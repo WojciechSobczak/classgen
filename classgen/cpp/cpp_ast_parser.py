@@ -11,11 +11,11 @@ from classgen.cpp.cpp_type import CPPType
 from classgen.enum import Enum
 from classgen.enum_ast_parser import EnumASTParser
 from classgen.cpp.cpp_standard_types import get_types_as_strings, get_type_from_strings
+from classgen.cpp.cpp_templated_type import CPPTemplatedType
 
 class CPPASTParser(ASTParser):
 
     def _try_parse_standard_type(self, expression: ast.expr) -> CPPType | None:
-        print(ast.dump(expression))
         match expression:
             case ast.Name(): 
                 type_name = expression.id
@@ -30,64 +30,45 @@ class CPPASTParser(ASTParser):
                 return expression.value
         return None
     
+    def _try_parse_templated_type(self, expression: ast.expr) -> CPPTemplatedType | None:
+        #Subscript(value=Name(id='CPPMap', ctx=Load()), slice=Tuple(elts=[Name(id='CPPString', ctx=Load()), Name(id='CPPDouble', ctx=Load())], ctx=Load()), ctx=Load())
+        args_list: list[ast.Name] = None
+        match expression:
+            case ast.Subscript(
+                value = ast.Name(),
+                slice = ast.Tuple()
+            ):
+                args_list = expression.slice.elts
+                for arg in args_list:
+                    if type(arg) != ast.Name:
+                        return None
+            case ast.Subscript(
+                value = ast.Name(),
+                slice = ast.Name()
+            ):
+                args_list = [expression.slice]
+                
+        if args_list is None:
+            return None        
 
-    @dataclasses.dataclass
-    class _ParseCallResult:
-        collection_name: str
-        template_args: list[str]
+        template_arguments: list[CPPType | str] = []
 
-    def _try_parse_templated_collection_call(self, expression: ast.expr) -> _ParseCallResult | None:
-        pass
-        ###Variables just to catch naming error in match clause
-        # from classgen import cpp                          #pylint: disable=import-outside-toplevel
-        # template_long_type: str = CPPTemplatedType        #pylint: disable=unused-variable
-        # template_short_type: type = cpp.TT                #pylint: disable=unused-variable
-        # collection_long_type: str = CPPStandardCollection #pylint: disable=unused-variable
-        # collection_short_type: type = cpp.SC              #pylint: disable=unused-variable
+        for arg in args_list:
+            type_from_string = get_type_from_strings(str(arg.id))
+            if type_from_string == None:
+                template_arguments.append(str(arg.id))
+            else:
+                template_arguments.append(type_from_string())
 
-        # match expression:
-        #     case ast.Call(
-        #         func = ast.Name(
-        #             id = 'CPPTemplatedType' | 'TT'
-        #         ),
-        #         args = [],
-        #         keywords = [
-        #             ast.keyword(
-        #                 arg = "type",
-        #                 value = ast.Attribute(
-        #                     value = ast.Name(
-        #                         id = 'CPPStandardCollection' | 'SC',
-        #                     )
-        #                 )
-        #             ),
-        #             ast.keyword(
-        #                 arg = "args",
-        #                 value = ast.List(
-        #                     elts = [*_]
-        #                 )
-        #             )
-        #         ]
-        #     ): 
-        #         if expression.func.id not in [CPPTemplatedType.__name__, 'TT']:
-        #             return None
-        #         if expression.keywords[0].value.value.id not in [CPPStandardCollection.__name__, 'SC']:
-        #             return None
-
-        #         parsed_collection_name = expression.keywords[0].value.attr
-        #         parsed_template_args: list[ast.expr] = expression.keywords[1].value.elts
-
-        #         output_template_args = []
-        #         for arg in parsed_template_args:
-        #             match arg:
-        #                 case ast.Name(): 
-        #                     output_template_args.append(arg.id) 
-        #                     break
-        #                 case _:
-        #                     raise Exception("_try_parse_call() parsed_template_args wrong type")
-
-        #         return CPPASTParser._ParseCallResult(parsed_collection_name, output_template_args)
-            
-        # return None
+        std_base_type = get_type_from_strings(str(expression.value.id))
+        if std_base_type is not None:
+            if not issubclass(std_base_type, CPPTemplatedType):
+                return None
+            return_type: CPPTemplatedType = std_base_type(template_arguments)
+            return return_type
+        
+        class_name = str(expression.value.id)
+        return CPPTemplatedType(class_name, class_name, template_arguments)
 
     def _parse_type_expression(self, expression: ast.expr) -> CPPType | str:
         parse_try = self._try_parse_standard_type(expression)
@@ -97,15 +78,10 @@ class CPPASTParser(ASTParser):
         parse_try = self._try_parse_constant(expression)
         if parse_try is not None:
             return parse_try
-                
-        # if type(expression) == ast.Name:
-        #     expression: ast.Name = expression
-        #     return expression.id
-            
-        # parse_try = self._try_parse_templated_collection_call(expression)
-        # if parse_try is not None:
-        #     template_target = CPPStandardCollection[parse_try.collection_name.upper()]
-        #     return CPPTemplatedType(template_target, parse_try.template_args)
+        
+        parse_try = self._try_parse_templated_type(expression)
+        if parse_try is not None:
+            return parse_try
         
         raise NotImplementedError(f"DIDNT EXPECT _parse_type_expression: {ast.dump(expression)}")
         
@@ -120,19 +96,42 @@ class CPPASTParser(ASTParser):
                 return CPPAccessModifier[expression.attr.upper()]
         raise NotImplementedError("DIDNT EXPECT _parse_access_expression")
     
+    def _parse_ast_constant_expression(self, expression: ast.expr, name: str) -> bool:
+        match expression:
+            case ast.Constant(
+                value = bool() | int() | float() | str()
+            ):
+                return expression.value
+        raise Exception(f"Wrong ast type from constant: fieldname: '{name}', AST: {ast.dump(expression)}")
+
     def _parse_static_expression(self, expression: ast.expr) -> bool:
-        if type(expression) != ast.Constant:
-            raise Exception("Wrong static type")
-        expression: ast.Constant = expression
-        constant_value = expression.value
-        if type(constant_value) != bool:
-            raise Exception("Wrong static constant_value type")
-        return constant_value
+        result = self._parse_ast_constant_expression(expression, "static")
+        if type(result) is not bool:
+            raise Exception("'static' argument must be boolean")
+        return result
+    
+    def _parse_const_expression(self, expression: ast.expr) -> bool:
+        result = self._parse_ast_constant_expression(expression, "const")
+        if type(result) is not bool:
+            raise Exception("'const' argument must be boolean")
+        return result
+    
+    def _parse_constexpr_expression(self, expression: ast.expr) -> bool:
+        result = self._parse_ast_constant_expression(expression, "constexpr")
+        if type(result) is not bool:
+            raise Exception("'constexpr' argument must be boolean")
+        return result
+    
+    def _parse_value_expression(self, expression: ast.expr) -> bool:
+        return self._parse_ast_constant_expression(expression, "value")
 
     def extract_field(self, name: str, keywords: list[ast.keyword]):
         field_type: CPPType = None
-        access_modifier = CPPAccessModifier.PUBLIC
         static = False
+        const = False
+        constexpr = False
+        access_modifier = CPPAccessModifier.PUBLIC
+        value: str | int | float = None
 
         for keyword in keywords:
             argument_name = keyword.arg
@@ -142,15 +141,26 @@ class CPPASTParser(ASTParser):
                 access_modifier = self._parse_access_expression(keyword.value)
             elif argument_name == "static":
                 static = self._parse_static_expression(keyword.value)
+            elif argument_name == "const":
+                const = self._parse_const_expression(keyword.value)
+            elif argument_name == "constexpr":
+                constexpr = self._parse_constexpr_expression(keyword.value)
+            elif argument_name == "value":
+                value = self._parse_value_expression(keyword.value)
             else:
                 raise Exception(f"Unexpected FieldDescriptor argument: {argument_name}")
+
+        if (constexpr or (static and constexpr)) and (value is None):
+            raise Exception("constexpr and static constexpr fileld must have value set.")
 
         return CPPField(
             name = name,
             type = field_type,
             static = static,
-            const = False,
-            access_modifier = access_modifier
+            const = const,
+            constexpr = constexpr,
+            access_modifier = access_modifier,
+            value = value
         )
     
     def extract_fields(self, class_body: list[ast.stmt]):

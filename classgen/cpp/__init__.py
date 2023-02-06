@@ -10,4 +10,4 @@ from .cpp_field import CPPField
 from .cpp_field_descriptor import CPPFieldDescriptor
 from .cpp_access_modifier import CPPAccessModifier
 from .cpp_access_modifier import CPPAccessModifier as AM
-from .cpp_code_generator import CPPCodeGenerator
+from .generators.cpp_code_generator import CPPCodeGenerator

@@ -11,7 +11,14 @@ namespace {{namespace}} {
 
 {% macro generate_fields(fields) -%}
     {% for field in fields -%}
-        {% if field.static %}static {%endif%}{{field.type.name}} {{field.name}};
+        {%- if field.static -%}static {% endif -%}
+        {%- if field.const -%}const {% endif -%}
+        {%- if field.constexpr -%}constexpr {% endif -%}
+        {{format_field_type(field.type)}} {{field.name}}
+        {%- if field.value is not none %} = {{get_field_value_formatted(field.value)}} 
+        {%- elif not field.static -%} {}
+        {%- endif -%}
+        ;
     {% endfor %}
 {% endmacro %}
 

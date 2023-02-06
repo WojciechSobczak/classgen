@@ -1,10 +1,10 @@
 
 
 from classgen.cpp.cpp_class import CPPClass
-from classgen.cpp.cpp_class_code_generator import CPPClassCodeGenerator
-from classgen.cpp.cpp_enum_code_generator import CPPEnumCodeGenerator
 from classgen import CodeGenerator
 from classgen import Enum
+from classgen.cpp.generators.cpp_class_code_generator import CPPClassCodeGenerator
+from classgen.cpp.generators.cpp_enum_code_generator import CPPEnumCodeGenerator
 from classgen.utils import set_if_none
 class CPPCodeGenerator(CodeGenerator):
 

@@ -27,8 +27,7 @@ def extract_classes(class_path_or_classes_path: str) -> list[ExtractedClass]:
             for file_name in file_names:
                 if file_name.endswith('.py'):
                     files_to_parse.append(os.path.join(directory_path, file_name))
-
-    print("KASZTAŃSTKO")
+                    
     for file_path in files_to_parse:
         with open(file_path, mode="r", encoding="utf-8") as file:
             tree = ast.parse(file.read())

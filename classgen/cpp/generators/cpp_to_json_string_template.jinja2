@@ -1,8 +1,0 @@
-std::string {{function_name}}() {
-    std::string result = "{";
-    {% for field in clazz.fields -%}
-    result += "    \"{{field.name}}\": " + {{get_set_value(field)}};
-    {% endfor -%}
-    result = "}";
-    return result;
-}

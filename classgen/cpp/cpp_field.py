@@ -9,4 +9,6 @@ class CPPField:
     type: CPPType
     static: bool
     const: bool
+    constexpr: bool
     access_modifier: CPPAccessModifier
+    value: str | int | float
