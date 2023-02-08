@@ -1,9 +1,0 @@
-[this]() -> std::string {
-    std::string result = "{";
-    for (const auto& value : this->{{set_name}}) {
-        result += {{get_to_string_value_format(set_type.value_type, 'value')}};
-        result += ",\n";
-    }
-    result = "}";
-    return result;
-}()

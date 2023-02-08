@@ -2,7 +2,6 @@ import textwrap
 import jinja2
 import os
 
-from classgen import CodeGenerator
 from classgen.cpp.cpp_class import CPPClass
 from classgen.enum import Enum, EnumField, ConstantNumericEnumField, AutoNumericEnumField, ComplexEnumField
 
@@ -33,11 +32,11 @@ class CPPEnumCodeGenerator:
                 struct_def[key] = type(value)
         return struct_def
 
-    def generate_code(self, enum: Enum, additional_generators: list['CodeGenerator']) -> str:
+    def generate_code(self, enum: Enum) -> str:
         if type(enum) != Enum:
             raise Exception(f"{self.__class__.__name__} requires clazz to be Enum")
         
-        with open(f'{_SCRIPT_PATH}/templates/enum_class_template.jinja2', "r") as file:
+        with open(f'{_SCRIPT_PATH}/templates/enum_class_template.jinja2', "r", encoding="UTF-8") as file:
             text_template = file.read()
         
         simple_fields = [field for field in enum.fields if type(field) != ComplexEnumField]
@@ -82,10 +81,12 @@ class CPPEnumCodeGenerator:
             struct_definition = self.create_enum_value_struct(complex_fields)
 
         environment = jinja2.Environment()
-        environment.globals.update(enum_value_to_assignment_string=enum_value_to_assignment_string)
-        environment.globals.update(type_to_string=type_to_string)
-        environment.globals.update(value_to_string=value_to_string)
-        environment.globals.update(get_full_name=get_full_name)
+        environment.globals.update(
+            enum_value_to_assignment_string=enum_value_to_assignment_string,
+            type_to_string=type_to_string,
+            value_to_string=value_to_string,
+            get_full_name=get_full_name,
+        )
         template = environment.from_string(text_template)
         text = template.render(
             enum = enum,

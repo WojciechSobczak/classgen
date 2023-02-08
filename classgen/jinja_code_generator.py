@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 import jinja2
-from classgen.code_generator import CodeGenerator
 
 @dataclass
 class JinjaTemplate:
     environment: jinja2.Environment
     template: jinja2.Template
 
-class JinjaCodeGenerator(CodeGenerator):
+class JinjaCodeGenerator:
 
     def __init__(self) -> None:
         self.templates: dict[str, JinjaTemplate] = {}

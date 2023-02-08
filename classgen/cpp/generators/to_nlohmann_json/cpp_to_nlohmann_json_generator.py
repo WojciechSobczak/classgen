@@ -9,16 +9,14 @@ from classgen.jinja_code_generator import JinjaCodeGenerator
 
 
 _SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
-_MAIN_TEMPLATE_PATH = f'{_SCRIPT_PATH}/cpp_to_json_string_template.jinja2'
-_STD_TEMPLATE_PATH = f'{_SCRIPT_PATH}/cpp_to_json_string_std_to_string_template.jinja2'
+_MAIN_TEMPLATE_PATH = f'{_SCRIPT_PATH}/cpp_to_nlohmann_json_template.jinja2'
 
-class CPPToJsonStringGenerator(JinjaCodeGenerator, CPPCodeFragmentsGenerator):
+class CPPToNlohmannJsonGenerator(JinjaCodeGenerator, CPPCodeFragmentsGenerator):
 
-    def __init__(self, function_name: str = "toJsonString") -> None:
+    def __init__(self, function_name: str = "toNlohmannJson") -> None:
         super().__init__()
         self.function_name = function_name
         self.main_template = self.load_template("main", _MAIN_TEMPLATE_PATH)
-        self.std_template = self.load_template("std", _STD_TEMPLATE_PATH)
     
     def setup_environment(self, environment: jinja2.Environment):
         environment.globals.update(
@@ -33,7 +31,7 @@ class CPPToJsonStringGenerator(JinjaCodeGenerator, CPPCodeFragmentsGenerator):
 
     def generate_fragments(self, clazz: CPPClass | Enum, namespace: str) -> CPPCodeFragments:
         if type(clazz) != CPPClass:
-            raise Exception("CPPToJsonStringGenerator only supports code generation for CPPClass")
+            raise Exception("CPPToNlohmannJsonGenerator only supports code generation for CPPClass")
         
         templated_fields = [field for field in clazz.fields if issubclass(type(field.type), CPPTemplatedType) and not field.static]
 
@@ -44,15 +42,7 @@ class CPPToJsonStringGenerator(JinjaCodeGenerator, CPPCodeFragmentsGenerator):
             default_indent_size = 4
         )
 
-        out_namespace_text = self.std_template.template.render(
-            function_name = self.function_name,
-            namespace = namespace,
-            class_name = clazz.name,
-            default_indent_size = 4
-        )
-
         result = CPPCodeFragments()
-        result.dependencies.standard_includes.append("sstream")
+        result.dependencies.libraries_includes.append("nlohmann/json.hpp")
         result.in_class_fragments.append(in_class_text)
-        result.out_namespace_fragments.append(out_namespace_text)
         return result
