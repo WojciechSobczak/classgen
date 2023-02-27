@@ -3,6 +3,7 @@ import jinja2
 import os
 
 from classgen.cpp.cpp_class import CPPClass
+from classgen.cpp.cpp_enum import CPPEnum
 from classgen.enum import Enum, EnumField, ConstantNumericEnumField, AutoNumericEnumField, ComplexEnumField
 
 _SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -32,8 +33,8 @@ class CPPEnumCodeGenerator:
                 struct_def[key] = type(value)
         return struct_def
 
-    def generate_code(self, enum: Enum) -> str:
-        if type(enum) != Enum:
+    def generate_code(self, enum: CPPEnum) -> str:
+        if type(enum) != CPPEnum:
             raise Exception(f"{self.__class__.__name__} requires clazz to be Enum")
         
         with open(f'{_SCRIPT_PATH}/templates/enum_class_template.jinja2', "r", encoding="UTF-8") as file:

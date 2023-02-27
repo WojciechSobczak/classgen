@@ -2,7 +2,7 @@ import os
 import jinja2
 
 from classgen.cpp.cpp_class import CPPClass
-from classgen.cpp.cpp_standard_types import CPPSet, CPPString, CPPStringView, is_numerical, CPPMap, CPPTemplatedType
+from classgen.cpp.cpp_standard_types import CPPSet, CPPString, CPPStringView, is_numerical_type, CPPMap, CPPTemplatedType
 from classgen.cpp.generators.cpp_code_fragments_generator import CPPCodeFragments, CPPCodeFragmentsGenerator
 from classgen.enum import Enum
 from classgen.jinja_code_generator import JinjaCodeGenerator
@@ -25,7 +25,7 @@ class CPPToNlohmannJsonGenerator(JinjaCodeGenerator, CPPCodeFragmentsGenerator):
             is_string = lambda _type: type(_type) == CPPString,
             is_str_or_class = lambda _type: type(_type) == str or type(_type) == CPPClass,
             is_string_view = lambda _type: type(_type) == CPPStringView,
-            is_numerical = is_numerical
+            is_numerical = is_numerical_type
         )
         environment.undefined = jinja2.StrictUndefined
 

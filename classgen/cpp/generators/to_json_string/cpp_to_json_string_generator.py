@@ -1,8 +1,9 @@
 import os
 import jinja2
+from classgen.common import ExtractedClass
 
 from classgen.cpp.cpp_class import CPPClass
-from classgen.cpp.cpp_standard_types import CPPSet, CPPString, CPPStringView, is_numerical, CPPMap, CPPTemplatedType
+from classgen.cpp.cpp_standard_types import CPPSet, CPPString, CPPStringView, is_numerical_type, CPPMap, CPPTemplatedType
 from classgen.cpp.generators.cpp_code_fragments_generator import CPPCodeFragments, CPPCodeFragmentsGenerator
 from classgen.enum import Enum
 from classgen.jinja_code_generator import JinjaCodeGenerator
@@ -14,11 +15,12 @@ _STD_TEMPLATE_PATH = f'{_SCRIPT_PATH}/cpp_to_json_string_std_to_string_template.
 
 class CPPToJsonStringGenerator(JinjaCodeGenerator, CPPCodeFragmentsGenerator):
 
-    def __init__(self, function_name: str = "toJsonString") -> None:
+    def __init__(self, function_name: str = "toJsonString", all_defined_classes: dict[str, ExtractedClass] = None) -> None:
         super().__init__()
         self.function_name = function_name
         self.main_template = self.load_template("main", _MAIN_TEMPLATE_PATH)
         self.std_template = self.load_template("std", _STD_TEMPLATE_PATH)
+        self.all_defined_classes = [] if all_defined_classes is None else all_defined_classes
     
     def setup_environment(self, environment: jinja2.Environment):
         environment.globals.update(
@@ -27,7 +29,8 @@ class CPPToJsonStringGenerator(JinjaCodeGenerator, CPPCodeFragmentsGenerator):
             is_string = lambda _type: type(_type) == CPPString,
             is_str_or_class = lambda _type: type(_type) == str or type(_type) == CPPClass,
             is_string_view = lambda _type: type(_type) == CPPStringView,
-            is_numerical = is_numerical
+            is_numerical = is_numerical_type,
+            is_user_defined = lambda _type: self.all_defined_classes.get(str(_type.name)) != None,
         )
         environment.undefined = jinja2.StrictUndefined
 
