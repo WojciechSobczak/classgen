@@ -4,8 +4,12 @@
         {{this}}{{field_name}}
     {%- elif is_str_or_class(field_type) -%}
         {{this}}{{field_name}}.{{function_name}}()
+    {%- elif is_bool(field_type) -%}
+        {{this}}{{field_name}}
     {%- elif is_map(field_type) or is_set(field_type) -%}
         {{field_name}}
+    {%- elif is_user_defined(field_type) -%}
+        {{field_name}}.{{function_name}}()
     {%- else -%}
         NON IMPLEMENTED FIELD IN TO STRING GENERATOR
     {%- endif -%}

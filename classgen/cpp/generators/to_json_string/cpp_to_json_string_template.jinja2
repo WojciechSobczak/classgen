@@ -4,6 +4,8 @@
         {{this}}{{field_name}}
     {%- elif is_string(field_type) -%}
         "\"" << {{this}}{{field_name}} << "\""
+    {%- elif is_bool(field_type) -%}
+        "\"" << {{this}}{{field_name}} == true ? "true" : "false" << "\""
     {%- elif is_str_or_class(field_type) -%}
         {{this}}{{field_name}}.{{function_name}}()
     {%- elif is_string_view(field_type) -%}

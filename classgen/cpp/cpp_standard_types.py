@@ -128,7 +128,8 @@ def from_python_type(_type: type) -> CPPType:
     value = {
         str: CPPString,
         int: CPPINT64,
-        float: CPPDouble
+        float: CPPDouble,
+        bool: CPPBool
     }.get(_type)
 
     if value == None:
@@ -139,6 +140,7 @@ def is_python_type(_type: type) -> bool:
     SET = {
         str,
         int,
-        float
+        float,
+        bool
     }
     return _type in SET

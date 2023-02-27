@@ -37,4 +37,4 @@ from .cpp_standard_types import (
 from .cpp_class import CPPClass
 from .cpp_field import CPPField
 from .cpp_field_descriptor import CPPFieldDescriptor
-from .generators.cpp_code_generator import CPPCodeGenerator
+from .cpp_code_generator import CPPCodeGenerator

@@ -1,21 +1,34 @@
 from typing import Any
 
+from classgen.common import Class, Field
+from classgen.cpp.cpp_class import CPPClass
+from classgen.cpp.cpp_field import CPPField
 
-def is_or_inherits_from(value, _type: type) -> bool:
-    return type(value) == _type or type(value).__bases__.__contains__(_type)
-
-def is_one_of(value: Any, types: list[type]) -> bool:
+def assert_one_of(value: Any, types: list[type]) -> bool:
     for _type in types:
         if type(value) == _type:
             return True
-    return False
+    raise Exception(f'is_one_of(): type of {value} does not match any of {types}')
 
-# def assert_type(value: Any, _type: type) -> bool:
-#     if type(_type) != type:
-#         raise Exception('check_type() requires type as second argument')
-#     if type(value) != _type:
-#         raise Exception(f'check_type(): type of {value} does not match {_type.__name__}')
+def extract_cpp_fields(clazz: Class | CPPClass) -> list[CPPField]:
+    assert_one_of(clazz, [Class, CPPClass])
 
-def set_if_none(value_to_check, value_to_set):
-    if value_to_check is None:
-        value_to_check = value_to_set
+    class_fields: list[CPPField] = []
+    if type(clazz) == Class:
+        for field in clazz.fields:
+            if type(field) == Field:
+                class_fields.append(CPPField.from_basic_field(field))
+            elif type(field) == CPPField:
+                class_fields.append(field)
+            else:
+                raise Exception("NOT SUPPORTED TYPE FIELD")
+    else:
+        class_fields = clazz.fields
+
+    return class_fields
+
+def extract_include_from_class(clazz: Class) -> str:
+    include = f"{clazz.class_type.__module__}.{clazz.class_type.__name__}"
+    #One for folder scan name, second for file name
+    include = include.split('.')[2::]
+    return '/'.join(include) + '.hpp'

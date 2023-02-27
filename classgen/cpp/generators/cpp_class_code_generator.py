@@ -1,5 +1,6 @@
 import dataclasses
 import os
+from typing import assert_type
 import jinja2
 from classgen.common import Class, Field
 from classgen.cpp.cpp_class import CPPClass
@@ -25,27 +26,14 @@ class CPPClassCodeGenerator:
         super().__init__()
         self.namespace = ""
 
-    def generate_code(self, clazz: Class | CPPClass, additional_generators: list[CPPCodeFragmentsGenerator]) -> str:
-        if type(clazz) != CPPClass and type(clazz) != Class:
-            raise Exception("CPPCodeGenerator requires clazz to be CPPClass | Class")
+    def generate_code(self, clazz: CPPClass, additional_generators: list[CPPCodeFragmentsGenerator]) -> str:
+        assert_type(clazz, CPPClass)
 
         with open(f'{_SCRIPT_PATH}/templates/class_template.jinja2', "r", encoding="UTF-8") as file:
             text_template = file.read()
 
-        class_fields: list[CPPField] = []
-        if type(clazz) == Class:
-            for field in clazz.fields:
-                if type(field) == Field:
-                    class_fields.append(CPPField.from_basic_field(field))
-                elif type(field) == CPPField:
-                    class_fields.append(field)
-                else:
-                    raise Exception("NOT SUPPORTED TYPE FIELD")
-        else:
-            class_fields = clazz.fields
-
         class_fragments = CPPCodeFragments()
-        for field in class_fields:
+        for field in clazz.fields:
             field: CPPField = field
             if not issubclass(type(field.type), CPPType):
                 raise Exception("ONLY CPP TYPES PLS")
@@ -88,11 +76,11 @@ class CPPClassCodeGenerator:
             format_field_type = format_field_type
         )
         text = template.render(
-            class_name = clazz.class_type.__name__,
+            class_name = clazz.name,
             fields = _CPPClassFields(
-                [field for field in class_fields if field.access_modifier == CPPAccessModifier.PUBLIC],
-                [field for field in class_fields if field.access_modifier == CPPAccessModifier.PRIVATE],
-                [field for field in class_fields if field.access_modifier == CPPAccessModifier.PROTECTED]
+                [field for field in clazz.fields if field.access_modifier == CPPAccessModifier.PUBLIC],
+                [field for field in clazz.fields if field.access_modifier == CPPAccessModifier.PRIVATE],
+                [field for field in clazz.fields if field.access_modifier == CPPAccessModifier.PROTECTED]
             ),
             fragments = class_fragments,
             namespace = self.namespace

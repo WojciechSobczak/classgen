@@ -26,7 +26,9 @@ class CPPField:
         elif is_standard_type(field.field_type): 
             _type = field.field_type()
         else:
-            _type = CPPType(field.field_type.__name__, field.field_type.__mro__[0].__name__)
+            include = field.field_type.__mro__[0].__name__
+            include = '/'.join(include.split('.')) + '.hpp'
+            _type = CPPType(field.field_type.__name__, include)
 
         return CPPField(
             name = field.name,
