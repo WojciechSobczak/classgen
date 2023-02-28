@@ -1,14 +1,12 @@
 import os
-import jinja2
 from classgen.common import Class
 
 from classgen.cpp.cpp_class import CPPClass
-from classgen.cpp.cpp_standard_types import CPPBool, CPPSet, CPPString, CPPStringView, is_numerical_type, CPPMap, CPPTemplatedType
+from classgen.cpp.cpp_standard_types import CPPTemplatedType
 from classgen.cpp.generators.cpp_code_fragments_generator import CPPCodeFragments, CPPCodeFragmentsGenerator
 from classgen.cpp.generators.cpp_jinja_code_generator import CPPJinjaCodeGenerator
 from classgen.enum import Enum
-from classgen.jinja_code_generator import JinjaCodeGenerator
-from classgen.utils import assert_one_of, extract_cpp_fields
+from classgen.utils import assert_one_of
 
 
 _SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))

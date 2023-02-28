@@ -1,6 +1,6 @@
 from classgen.common import Class
 from classgen.cpp.cpp_class import CPPClass
-from classgen.utils import extract_cpp_fields, extract_include_from_class
+from classgen.cpp.utils import extract_cpp_fields, extract_include_from_class
 
 def convert_classes_to_cppclasses(classes: list[Class]) -> list[CPPClass]:
     output_classes: list[CPPClass] = []

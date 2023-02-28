@@ -1,9 +1,26 @@
+
+
+
+{%- macro format_field_type(field_type) -%}
+{%- if not is_templated(field_type) -%} 
+    {{- field_type.name -}}
+{%- else -%}
+
+{{- field_type.name -}}<
+{%- for arg in field_type.args -%}
+    {{- arg.name -}}
+    {%-if loop.revindex0 != 0 -%}, {%endif-%}
+{%- endfor -%}
+>
+{%- endif -%}
+{% endmacro %}
+
 {%- macro generate_fields(fields) -%}
     {% for field in fields -%}
         {%- if field.static -%}static {% endif -%}
         {%- if field.const -%}const {% endif -%}
         {%- if field.constexpr -%}constexpr {% endif -%}
-        {{format_field_type(field.type)}} {{field.name}}
+        {{- format_field_type(field.type)}} {{field.name -}}
         {%- if field.value is not none %} = {{get_field_value_formatted(field.value)}} 
         {%- elif not field.static -%} {}
         {%- endif -%}
@@ -40,7 +57,7 @@
 namespace {{namespace}} {
 {%- endif %}
 
-{{paste_fragments_codes(fragments.after_namespace_before_fragments)}}
+{{paste_fragments_codes(fragments.after_namespace_before_class_fragments)}}
 
 class {{class_name}} 
 {

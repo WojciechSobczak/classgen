@@ -6,10 +6,10 @@ from classgen.common import Class, Field
 from classgen.cpp.cpp_class import CPPClass
 from classgen.cpp.cpp_access_modifier import CPPAccessModifier
 from classgen.cpp.cpp_field import CPPField
-from classgen.cpp.cpp_templated_type import CPPTemplatedType
 from classgen.cpp.cpp_type import CPPType
 from classgen.cpp.cpp_standard_types import is_standard_type
 from classgen.cpp.generators.cpp_code_fragments_generator import CPPCodeFragments, CPPCodeFragmentsGenerator
+from classgen.cpp.generators.cpp_jinja_code_generator import CPPJinjaCodeGenerator
 
 
 _SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -20,23 +20,40 @@ class _CPPClassFields:
     private_fields: list[CPPField]
     protected_fields: list[CPPField]
 
-class CPPClassCodeGenerator:
+_SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
+_MAIN_TEMPLATE_PATH = f'{_SCRIPT_PATH}/templates/class_template.jinja2'
 
-    def __init__(self):
-        super().__init__()
+class CPPClassCodeGenerator(CPPJinjaCodeGenerator):
+
+    def __init__(self, all_defined_classes: dict[str, CPPClass] = None):
+        super().__init__(all_defined_classes)
         self.namespace = ""
+        self.main_template = self.load_template("main", _MAIN_TEMPLATE_PATH)
+
+    def get_field_value_formatted(self, field_value):
+        if field_value == None:
+            raise Exception("None field value. Cannot be formatted.")
+        if type(field_value) in { int, float }:
+            return field_value
+        else:
+            return f'"{field_value}"'
+
+    def setup_environment(self, environment: jinja2.Environment):
+        super().setup_environment(environment)
+        environment.globals.update(
+            get_field_value_formatted = self.get_field_value_formatted,
+        )
+
 
     def generate_code(self, clazz: CPPClass, additional_generators: list[CPPCodeFragmentsGenerator]) -> str:
         assert_type(clazz, CPPClass)
-
-        with open(f'{_SCRIPT_PATH}/templates/class_template.jinja2', "r", encoding="UTF-8") as file:
-            text_template = file.read()
 
         class_fragments = CPPCodeFragments()
         for field in clazz.fields:
             field: CPPField = field
             if not issubclass(type(field.type), CPPType):
                 raise Exception("ONLY CPP TYPES PLS")
+            
             if is_standard_type(field.type) and field.type.include_path is not None:
                 class_fragments.dependencies.standard_includes.append(field.type.include_path)
             elif field.type.include_path is not None:
@@ -50,32 +67,8 @@ class CPPClassCodeGenerator:
                 class_fragments.merge(result)
 
         class_fragments.dependencies.remove_duplicates()
-
-        def get_field_value_formatted(field_value):
-            if field_value == None:
-                raise Exception("None field value. Cannot be formatted.")
-            if type(field_value) in { int, float }:
-                return field_value
-            else:
-                return f'"{field_value}"'
-            
-        def format_field_type(field_type: CPPType):
-            formatted_type = field_type.name
-            if issubclass(type(field_type), CPPTemplatedType):
-                field_type: CPPTemplatedType = field_type
-                args_type_names = []
-                for arg in field_type.args:
-                    args_type_names.append(arg.name)
-                formatted_type +=f'<{", ".join(args_type_names)}>'
-            return formatted_type
-
-        environment = jinja2.Environment()
-        template = environment.from_string(text_template)
-        environment.globals.update(
-            get_field_value_formatted = get_field_value_formatted,
-            format_field_type = format_field_type
-        )
-        text = template.render(
+       
+        text = self.main_template.template.render(
             class_name = clazz.name,
             fields = _CPPClassFields(
                 [field for field in clazz.fields if field.access_modifier == CPPAccessModifier.PUBLIC],

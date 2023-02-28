@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from classgen.cpp.cpp_templated_type import CPPTemplatedType
-
+from typing import Generic, TypeVar, assert_type
 from classgen.cpp.cpp_type import CPPType
 
 @dataclass(frozen = True)
@@ -68,15 +67,25 @@ class CPPStringView(CPPType):
     def __init__(self):
         super().__init__("std::string_view", "string_view")
 
-@dataclass(frozen = True)
-class CPPVector(CPPTemplatedType):
-    def __init__(self, args: list[CPPType]):
-        super().__init__("std::vector", "vector", args) #pylint: disable=too-many-function-args
+@dataclass(frozen=True)
+class CPPTemplatedType(CPPType):
+    args: list[CPPType]
+
+
+CPPVectorValue = TypeVar("CPPVectorValue")
 
 @dataclass(frozen = True)
-class CPPMap(CPPTemplatedType):
-    def __init__(self, args: list[CPPType]):
-        super().__init__("std::map", "map", args) #pylint: disable=too-many-function-args
+class CPPVector(CPPTemplatedType, Generic[CPPVectorValue]):
+    def __init__(self, arg: CPPType):
+        super().__init__("std::vector", "vector", [arg]) #pylint: disable=too-many-function-args
+
+CPPMapKey = TypeVar("CPPMapKey")
+CPPMapValue = TypeVar("CPPMapValue")
+
+@dataclass(frozen = True)
+class CPPMap(CPPTemplatedType, Generic[CPPMapKey, CPPMapValue]):
+    def __init__(self, key: CPPType, value: CPPType):
+        super().__init__("std::map", "map", [key, value]) #pylint: disable=too-many-function-args
 
     @property
     def key_type(self) -> CPPType:
@@ -85,17 +94,27 @@ class CPPMap(CPPTemplatedType):
     @property
     def value_type(self) -> CPPType:
         return self.args[1]
+    
+    def __hash__(self):
+        return hash((self.name, self.include_path, tuple(self.args)))
+
+CPPSetValue = TypeVar("CPPSetValue")
 
 @dataclass(frozen = True)
-class CPPSet(CPPTemplatedType):
-    def __init__(self, args: list[CPPType]):
-        super().__init__("std::set", "set", args) #pylint: disable=too-many-function-args
+class CPPSet(CPPTemplatedType, Generic[CPPSetValue]):
+    def __init__(self, arg: CPPType):
+        super().__init__("std::set", "set", [arg]) #pylint: disable=too-many-function-args
 
     @property
     def value_type(self) -> CPPType:
         return self.args[0]
+    
+    def __hash__(self):
+        return hash((self.name, self.include_path, tuple(self.args)))
 
 def is_numerical_type(_type: type) -> bool:
+    assert_type(_type, type)
+
     SET = {
         CPPINT8,
         CPPINT16,
@@ -108,21 +127,61 @@ def is_numerical_type(_type: type) -> bool:
         CPPFloat,
         CPPDouble
     }
-    print(_type)
+
     return _type in SET
 
 def is_standard_type(_type: type) -> bool:
-    if is_numerical_type(_type):
+    assert_type(_type, type)
+
+    if is_numerical_type(_type) or is_templated_type(_type):
         return True
-    SET = {
+    
+    NORMAL_SET = {
         CPPBool,
         CPPString,
         CPPStringView,
+    }
+
+    return _type in NORMAL_SET
+
+def is_templated_type(_type: type) -> bool:
+    assert_type(_type, type)
+
+    if hasattr(_type, '__origin__') == False or hasattr(_type, '__args__') == False:
+        return False
+
+    TEMPLATED_SET = {
         CPPVector,
         CPPMap,
         CPPSet
     }
-    return _type in SET
+
+    return _type.__origin__ in TEMPLATED_SET
+
+def extract_templated_type(_type: type) -> CPPTemplatedType:
+    assert_type(_type, type)
+
+    base_class = _type.__origin__
+    templated_classes = _type.__args__
+
+    if base_class == CPPMap:
+        if len(templated_classes) != 2:
+            raise Exception('CPPMap requires 2 arguments')
+        return CPPMap(templated_classes[0](), templated_classes[1]())
+    
+    if base_class == CPPVector:
+        if len(templated_classes) != 1:
+            raise Exception('CPPVector requires 1 arguments')
+        return CPPVector(templated_classes[0]())
+    
+    if base_class == CPPSet:
+        if len(templated_classes) != 1:
+            raise Exception('CPPSet requires 1 arguments')
+        return CPPSet(templated_classes[0]())
+
+    raise Exception("NOT HANDLED GENERIC") 
+
+
 
 def from_python_type(_type: type) -> CPPType:
     value = {

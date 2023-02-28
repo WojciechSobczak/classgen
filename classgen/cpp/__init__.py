@@ -1,9 +1,5 @@
 # pylint: disable=W0404
 #Pylint remimport disabled for convinience aliases imports
-from .cpp_templated_type import (
-    CPPTemplatedType, 
-    CPPTemplatedType as TT
-)
 
 from .cpp_standard_types import (
     CPPType, 
