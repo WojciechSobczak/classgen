@@ -31,11 +31,23 @@ for clazz in classes:
     with open(file_path, "w", encoding="UTF-8") as file:
         file.write(code_generator.generate_code(clazz, namespace="Veracruz"))
 
-utils.execute_command("clang++ main.cpp -std=c++2b -o main.exe -Iincludes -Igenerated")
-utils.execute_command("main.exe")
-
 hash_path = f'{SCRIPT_DIR}/../classgen/cpp/generators/templates/hash.hpp'
-dest_path = f'{GENERATED_DIR}/classgen/hash.hpp'
+dest_path = f'{SCRIPT_DIR}/includes/classgen/hash.hpp'
 if os.path.exists(dest_path) == False:
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     shutil.copyfile(hash_path, dest_path)
+
+json_header_path = f'{SCRIPT_DIR}/includes/nlohmann/json.hpp'
+if os.path.exists(json_header_path) == False:
+    os.makedirs(os.path.dirname(json_header_path), exist_ok=True)
+    with open(json_header_path, "w", encoding="UTF-8") as file:
+        file.write(utils.download_page("https://github.com/nlohmann/json/releases/download/v3.11.2/json.hpp"))
+
+utils.execute_command("clang++ main.cpp -std=c++2b -o main.exe -Iincludes -Igenerated")
+utils.execute_command("main.exe")
+
+
+
+
+
+    

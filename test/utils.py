@@ -4,7 +4,6 @@ import shutil
 import zipfile
 import subprocess
 import sys
-import urllib
 import urllib.request
 
 def remove_directory(directory):
@@ -31,16 +30,8 @@ def unzip_folder(zip_file: zipfile.ZipFile, folder_in_zip: str, dest_on_disk: st
             file_names_to_extract.append(file_name)
     zip_file.extractall(dest_on_disk, file_names_to_extract)
 
-def download_file_with_basic_auth(url: str, output_file_path: str, username: str, password: str):
-    password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
-    password_mgr.add_password(None, url, username, password)
-    handler = urllib.request.HTTPBasicAuthHandler(password_mgr)
-    opener = urllib.request.build_opener(handler)
-    print("Downloading:", url)
-    response = opener.open(url)
-    os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
-    with open(output_file_path, "wb") as output_file:
-        output_file.write(response.read())
+def download_page(url: str) -> str:
+    return urllib.request.urlopen(url).read().decode('utf-8')
 
 def execute_command(command_string: str, expected_ret_code: int = 0, print_command: bool = True):
     if print_command:
