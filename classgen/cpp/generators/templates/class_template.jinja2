@@ -1,91 +1,86 @@
-
-
-
-{%- macro format_field_type(field_type) -%}
-{%- if not is_templated(field_type) -%} 
-    {{- field_type.name -}}
-{%- else -%}
-
-{{- field_type.name -}}<
-{%- for arg in field_type.args -%}
-    {{- arg.name -}}
-    {%-if loop.revindex0 != 0 -%}, {%endif-%}
-{%- endfor -%}
->
-{%- endif -%}
+{% macro paste_includes(includes, begin_char, end_char) %}
+{% for include in includes %}
+#include {{begin_char}}{{include}}{{end_char}}
+{% endfor %}
 {% endmacro %}
-
-{%- macro generate_fields(fields) -%}
-    {% for field in fields -%}
-        {%- if field.static -%}static {% endif -%}
-        {%- if field.const -%}const {% endif -%}
-        {%- if field.constexpr -%}constexpr {% endif -%}
-        {{- format_field_type(field.type)}} {{field.name -}}
-        {%- if field.value is not none %} = {{get_field_value_formatted(field.value)}} 
-        {%- elif not field.static -%} {}
-        {%- endif -%}
-        ;
-    {% endfor %}
-{% endmacro %}
-
-{%- macro paste_fragments_codes(codes) -%}
+{##}
+{{ paste_includes(fragments.dependencies.quoted_includes, '"', '"') }}
+{{ paste_includes(fragments.dependencies.libraries_includes, '<', '>') }}
+{{ paste_includes(fragments.dependencies.standard_includes, '<', '>') -}}
+{##}
+{##}
+{##}
+{% macro paste_fragments_codes(codes) %}
 {% if codes|length > 0 %}
 {% for code in codes -%}
-    {{code}}
-    
+   {{code}}
+
 {% endfor %}
 {% endif %}
 {% endmacro %}
 
+{{ paste_fragments_codes(fragments.before_namespace_fragments) }}
 
-{%- for include in fragments.dependencies.quoted_includes -%}
-#include "{{include}}"
+{% macro format_field_type(field_type) %}
+{% if not is_templated(field_type) %} 
+    {{- field_type.name -}}
+{% else %}
+{% set arguments = [] %}
+{% for arg in field_type.args %}
+    {{- arguments.append(arg.name) or "" -}}
 {% endfor %}
-
-{% for include in fragments.dependencies.libraries_includes -%}
-#include <{{include}}>
+    {{- field_type.name -}}{{- '<' ~ arguments|join(', ') ~ '>' -}}
+{% endif %}
+{% endmacro %}
+{##}
+{##}
+{##}
+{% macro generate_fields_code(fields) %}
+{% for field in fields %}
+    {% set static = "static " if field.static else "" %}
+    {% set const = "const " if field.const else "" %}
+    {% set constexpr = "constexpr " if field.constexpr else "" %}
+    {% set type = format_field_type(field.type) %}
+    {% set init = (" = " ~ get_field_value_formatted(field.value)) if field.value is not none else "" %}
+    {{constexpr}}{{static}}{{const}}{{type}} {{field.name}}{{init}};
 {% endfor %}
+{% endmacro %}
+{##}
+{##}
+{##}
+{% macro generate_fields_block(fields, modifier) %}
+{% if fields|length > 0 %}
+{{modifier}}:
+{{generate_fields_code(fields)}}
+{% endif %}
+{% endmacro %}
+{##}
+{##}
+{##}
 
-{% for include in fragments.dependencies.standard_includes -%}
-#include <{{include}}>
-{% endfor %}
-
-
-{{paste_fragments_codes(fragments.before_namespace_fragments)}}
-
-{% if namespace|length > 0 -%}
+{% if namespace|length > 0 %}
 namespace {{namespace}} {
-{%- endif %}
+{% endif %}
 
-{{paste_fragments_codes(fragments.after_namespace_before_class_fragments)}}
-
+{{ paste_fragments_codes(fragments.after_namespace_before_class_fragments) }}
+{##}
+{##}
+{##}
 class {{class_name}} 
 {
-{% if fields.public_fields|length > 0 -%}
-public:
-    {{generate_fields(fields.public_fields)}}
-{%- endif -%}
-
-{% if fields.private_fields|length > 0 -%}
-private:
-    {{generate_fields(fields.private_fields)}}
-{%- endif -%}
-
-{% if fields.protected_fields|length > 0 -%}
-protected:
-    {{generate_fields(fields.protected_fields)}}
-{%- endif -%}
+{{ generate_fields_block(fields.public_fields, "public") -}}
+{{ generate_fields_block(fields.protected_fields, "protected") -}}
+{{ generate_fields_block(fields.private_fields, "private") -}}
 
 public:
-{{paste_fragments_codes(fragments.in_class_fragments)|indent(4, False)}}
 
+{{paste_fragments_codes(fragments.in_class_fragments)|indent(4, True) -}}
 };
 
-{{paste_fragments_codes(fragments.out_class_in_namespace_fragments)}}
+{{paste_fragments_codes(fragments.out_class_in_namespace_fragments) }}
 
-
-{% if namespace|length > 0 -%}
+{%- if namespace|length > 0 -%}
 }
-{%- endif -%}
+{%- endif %}
 
 {{paste_fragments_codes(fragments.out_namespace_fragments)}}

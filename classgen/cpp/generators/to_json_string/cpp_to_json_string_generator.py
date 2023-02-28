@@ -22,7 +22,7 @@ class CPPToJsonStringGenerator(CPPJinjaCodeGenerator, CPPCodeFragmentsGenerator)
         self.std_template = self.load_template("std", _STD_TEMPLATE_PATH)
         self.all_defined_classes = [] if all_defined_classes is None else all_defined_classes
 
-    def generate_fragments(self, clazz: Class | CPPClass | Enum, namespace: str) -> CPPCodeFragments:
+    def generate_fragments(self, clazz: Class | CPPClass | Enum, namespace: str = "") -> CPPCodeFragments:
         assert_one_of(clazz, [CPPClass, Enum])
         
         templated_fields = [field for field in clazz.fields if issubclass(type(field.type), CPPTemplatedType) and not field.static]
@@ -42,7 +42,9 @@ class CPPToJsonStringGenerator(CPPJinjaCodeGenerator, CPPCodeFragmentsGenerator)
         )
 
         result = CPPCodeFragments()
-        result.dependencies.standard_includes.append("sstream")
+        for include in ["sstream", "iomanip"]:
+            result.dependencies.standard_includes.append(include)
+
         result.in_class_fragments.append(in_class_text)
         result.out_namespace_fragments.append(out_namespace_text)
         return result

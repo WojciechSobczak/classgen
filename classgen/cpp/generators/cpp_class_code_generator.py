@@ -1,6 +1,5 @@
 import dataclasses
 import os
-from typing import assert_type
 import jinja2
 from classgen.common import Class, Field
 from classgen.cpp.cpp_class import CPPClass
@@ -10,6 +9,7 @@ from classgen.cpp.cpp_type import CPPType
 from classgen.cpp.cpp_standard_types import is_standard_type
 from classgen.cpp.generators.cpp_code_fragments_generator import CPPCodeFragments, CPPCodeFragmentsGenerator
 from classgen.cpp.generators.cpp_jinja_code_generator import CPPJinjaCodeGenerator
+from classgen.utils import assert_type
 
 
 _SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -25,9 +25,9 @@ _MAIN_TEMPLATE_PATH = f'{_SCRIPT_PATH}/templates/class_template.jinja2'
 
 class CPPClassCodeGenerator(CPPJinjaCodeGenerator):
 
-    def __init__(self, all_defined_classes: dict[str, CPPClass] = None):
+    def __init__(self, all_defined_classes: dict[str, CPPClass] = None, namespace: str = ""):
         super().__init__(all_defined_classes)
-        self.namespace = ""
+        self.namespace = namespace
         self.main_template = self.load_template("main", _MAIN_TEMPLATE_PATH)
 
     def get_field_value_formatted(self, field_value):
@@ -54,7 +54,7 @@ class CPPClassCodeGenerator(CPPJinjaCodeGenerator):
             if not issubclass(type(field.type), CPPType):
                 raise Exception("ONLY CPP TYPES PLS")
             
-            if is_standard_type(field.type) and field.type.include_path is not None:
+            if is_standard_type(type(field.type)) and field.type.include_path is not None:
                 class_fragments.dependencies.standard_includes.append(field.type.include_path)
             elif field.type.include_path is not None:
                 class_fragments.dependencies.quoted_includes.append(field.type.include_path)

@@ -12,11 +12,11 @@ class CPPCodeGenerator:
         super().__init__()
         self.additional_generators = [] if additional_generators is None else additional_generators
 
-    def generate_code(self, clazz: Class | CPPClass | CPPEnum) -> str:
+    def generate_code(self, clazz: Class | CPPClass | CPPEnum, namespace: str = "") -> str:
         assert_one_of(clazz, [CPPClass, CPPEnum])
 
         if type(clazz) == CPPClass:
-            generator = CPPClassCodeGenerator()
+            generator = CPPClassCodeGenerator(namespace=namespace)
             return generator.generate_code(clazz, self.additional_generators)
         elif type(clazz) == CPPEnum:
             generator = CPPEnumCodeGenerator()

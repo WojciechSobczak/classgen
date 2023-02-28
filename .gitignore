@@ -1,5 +1,10 @@
 __pycache__
 .vscode
-test
 build
 classgen.egg-info
+test/__pycache__
+test/.vscode
+test/*.exe
+test/*.bat
+test/includes
+test/generated

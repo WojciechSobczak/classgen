@@ -1,5 +1,5 @@
 namespace std {
-    {%- set namespace = "" if namespace|length == 0 else namespace + "::" %}
+    {% set namespace = "" if namespace|length == 0 else namespace + "::" %}
     std::string to_string(const {{namespace}}{{class_name}}& object) {
         return object.{{function_name}}({{default_indent_size}});
     }

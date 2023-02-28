@@ -24,5 +24,5 @@ class CPPCodeFragments:
 
 @dataclass
 class CPPCodeFragmentsGenerator:
-    def generate_fragments(self, clazz: CPPClass | Enum, namespace: str) -> CPPCodeFragments | None:
+    def generate_fragments(self, clazz: CPPClass | Enum, namespace: str = "") -> CPPCodeFragments | None:
         raise Exception("CPPCodeFragmentsGenerator() doesnt generate nothing on its own. Pls override it.")

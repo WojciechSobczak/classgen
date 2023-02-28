@@ -1,20 +1,17 @@
+import os
 import textwrap
 import jinja2
-import os
 
-from classgen.cpp.cpp_class import CPPClass
 from classgen.cpp.cpp_enum import CPPEnum
-from classgen.enum import Enum, EnumField, ConstantNumericEnumField, AutoNumericEnumField, ComplexEnumField
+from classgen.enum import AutoNumericEnumField, ComplexEnumField, ConstantNumericEnumField, EnumField
 
 _SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 class CPPEnumCodeGenerator:
 
-    def __init__(self, namespace: str = "", class_file_map: dict[CPPClass, str] = None) -> None:
+    def __init__(self, namespace: str = "") -> None:
         super().__init__()
         self.namespace = "" if namespace is None else namespace
-        self.class_file_map = {} if class_file_map is None else class_file_map
-
 
     def create_enum_value_struct(self, fields: list[ComplexEnumField]) -> dict[str, type]:
         struct_fields = set()

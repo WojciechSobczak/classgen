@@ -18,7 +18,7 @@ class CPPToNlohmannJsonGenerator(CPPJinjaCodeGenerator, CPPCodeFragmentsGenerato
         self.function_name = function_name
         self.main_template = self.load_template("main", _MAIN_TEMPLATE_PATH)
     
-    def generate_fragments(self, clazz: CPPClass | Enum, namespace: str) -> CPPCodeFragments:
+    def generate_fragments(self, clazz: CPPClass | Enum, namespace: str = "") -> CPPCodeFragments:
         if type(clazz) != CPPClass:
             raise Exception("CPPToNlohmannJsonGenerator only supports code generation for CPPClass")
         
@@ -26,6 +26,7 @@ class CPPToNlohmannJsonGenerator(CPPJinjaCodeGenerator, CPPCodeFragmentsGenerato
 
         in_class_text = self.main_template.template.render(
             function_name = self.function_name,
+            namespace = namespace,
             templated_fields = templated_fields,
             all_fields = clazz.fields,
             default_indent_size = 4
@@ -34,4 +35,6 @@ class CPPToNlohmannJsonGenerator(CPPJinjaCodeGenerator, CPPCodeFragmentsGenerato
         result = CPPCodeFragments()
         result.dependencies.libraries_includes.append("nlohmann/json.hpp")
         result.in_class_fragments.append(in_class_text)
+        result.before_namespace_fragments.append('//before_namespace_fragments')
+        result.after_namespace_before_class_fragments.append('//after_namespace_before_class_fragments')
         return result

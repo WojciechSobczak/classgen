@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Generic, TypeVar, assert_type
+from typing import Generic, TypeVar
 from classgen.cpp.cpp_type import CPPType
+from classgen.utils import assert_type
 
 @dataclass(frozen = True)
 class CPPINT8(CPPType):
@@ -131,9 +132,11 @@ def is_numerical_type(_type: type) -> bool:
     return _type in SET
 
 def is_standard_type(_type: type) -> bool:
+    if is_templated_type(_type):
+        return True
+    
     assert_type(_type, type)
-
-    if is_numerical_type(_type) or is_templated_type(_type):
+    if is_numerical_type(_type):
         return True
     
     NORMAL_SET = {
@@ -145,11 +148,9 @@ def is_standard_type(_type: type) -> bool:
     return _type in NORMAL_SET
 
 def is_templated_type(_type: type) -> bool:
-    assert_type(_type, type)
-
     if hasattr(_type, '__origin__') == False or hasattr(_type, '__args__') == False:
         return False
-
+    
     TEMPLATED_SET = {
         CPPVector,
         CPPMap,
@@ -159,7 +160,8 @@ def is_templated_type(_type: type) -> bool:
     return _type.__origin__ in TEMPLATED_SET
 
 def extract_templated_type(_type: type) -> CPPTemplatedType:
-    assert_type(_type, type)
+    if is_templated_type(_type) == False:
+        raise Exception("Not valid templated type")
 
     base_class = _type.__origin__
     templated_classes = _type.__args__

@@ -11,6 +11,15 @@ class FieldDescriptor:
     def __str__(self) -> str:
         return f'FD({self.arguments})'
     
+    def get_field(self, name: str, default = None):
+        value = self.arguments.get(name)
+        if value != None:
+            return value
+        if value == None and default != None:
+            return default
+        return None
+    
+    
 class Field:
     def __init__(self, name: str, field_type: type, field_descriptor: FieldDescriptor) -> None:
         self.name = name
@@ -75,7 +84,7 @@ def extract_classes(classes_directory: str, calling_script_path: str) -> list[Cl
         for name, field_type in class_type.__annotations__.items():
             class_value = class_values.get(name)
             if class_value is not None:
-                if type(class_value) != FieldDescriptor:
+                if not issubclass(type(class_value), FieldDescriptor):
                     raise Exception("Class Fields value must be field descriptors")
                 class_fields.append(Field(name, field_type, class_value))
             else:

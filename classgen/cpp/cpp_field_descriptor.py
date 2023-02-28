@@ -6,11 +6,13 @@ class CPPFieldDescriptor(FieldDescriptor):
 
     def __init__(self, 
         static: bool = False, 
+        const: bool = False,
+        constexpr: bool = False,
         access: CPPAccessModifier = CPPAccessModifier.PUBLIC, 
-        field_type: CPPType = None
+        value: str | int | float | None = None
     ) -> None:
         self.static = static
         self.access = access
-        self.field_type = field_type
-        if self.field_type == None:
-            raise Exception("Type must be specified")
+        self.const = const
+        self.constexpr = constexpr
+        self.value = value
