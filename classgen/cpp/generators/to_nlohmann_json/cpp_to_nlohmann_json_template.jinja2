@@ -36,18 +36,13 @@ NON IMPLEMENTED FIELD IN TO TEMPLATE TO STRING GENERATOR
 {% macro generate_map_converter_lambda(map_type, converter_prefix) %}
 constexpr auto {{converter_prefix}}{{CONVERTER_SUFFIX}} = []({{format_field_type(map_type)}} map_arg_name) -> nlohmann::json {
     {##}
-    {% if is_templated(map_type.key_type) %}
-    {{generate_templated_type_converter_lambda(map_type.key_type, "key")|indent(4, False)}}
-    {% endif %}
-    {##}
     {% if is_templated(map_type.value_type) %}
     {{generate_templated_type_converter_lambda(map_type.value_type, "value")|indent(4, False)}}
     {% endif %}
     {##}
     nlohmann::json json = nlohmann::json::object();
     for (const auto& [key, value] : map_arg_name) {
-        {% set key_string = "key_converter(key).dump(0)" if is_templated(map_type.key_type) else 'key' %}
-        json[{{key_string}}] = {{value_to_json(map_type.value_type, 'value', False)|trim}};
+        json[key] = {{value_to_json(map_type.value_type, 'value', False)|trim}};
     }
     return json;
 };
