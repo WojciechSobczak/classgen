@@ -1,12 +1,13 @@
 import os
 import shutil
 import sys
+from data_classes.important_data import TemplateRichData
 import utils
 import classgen
 import classgen.cpp
 from classgen.common import extract_classes
 from classgen.cpp.generators.cpp_class_converter import convert_classes_to_cppclasses
-from classgen.cpp.generators.to_json_string.cpp_to_json_string_generator import CPPToJsonStringGenerator
+from classgen.cpp.generators.to_json_string.cpp_to_debug_json_string_generator import CPPToDebugJsonStringGenerator
 from classgen.cpp.generators.to_nlohmann_json.cpp_to_nlohmann_json_generator import CPPToNlohmannJsonGenerator
 
 
@@ -20,8 +21,8 @@ classes = convert_classes_to_cppclasses(classes)
 all_defined_classes= {clazz.name: clazz for clazz in classes} 
 
 code_generator = classgen.cpp.CPPCodeGenerator([
-    CPPToJsonStringGenerator(all_defined_classes = all_defined_classes),
-    CPPToNlohmannJsonGenerator(all_defined_classes = all_defined_classes)
+    CPPToDebugJsonStringGenerator(all_defined_classes = all_defined_classes, exclusions=[]),
+    CPPToNlohmannJsonGenerator(all_defined_classes = all_defined_classes, exclusions=[TemplateRichData])
 ])
 
 utils.remove_directory(GENERATED_DIR)
@@ -32,6 +33,9 @@ for clazz in classes:
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, "w", encoding="UTF-8") as file:
         file.write(code_generator.generate_code(clazz, namespace="Veracruz"))
+
+
+
 
 for file in ['classgen.hpp']:
     file_path = f'{SCRIPT_DIR}/../classgen/cpp/generators/templates/{file}'

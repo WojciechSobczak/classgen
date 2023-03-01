@@ -1,5 +1,6 @@
 import os
 import jinja2
+from classgen.cassert import assert_type
 
 from classgen.cpp.cpp_class import CPPClass
 from classgen.cpp.cpp_standard_types import CPPSet, CPPString, CPPStringView, is_numerical_type, CPPMap, CPPTemplatedType
@@ -13,14 +14,17 @@ _MAIN_TEMPLATE_PATH = f'{_SCRIPT_PATH}/cpp_to_nlohmann_json_template.jinja2'
 
 class CPPToNlohmannJsonGenerator(CPPJinjaCodeGenerator, CPPCodeFragmentsGenerator):
 
-    def __init__(self, function_name: str = "toNlohmannJson", all_defined_classes: dict[str, CPPClass] = None) -> None:
+    def __init__(self, function_name: str = "toNlohmannJson", all_defined_classes: dict[str, CPPClass] = None, exclusions: list[type] = None) -> None:
         super().__init__(all_defined_classes)
         self.function_name = function_name
         self.main_template = self.load_template("main", _MAIN_TEMPLATE_PATH)
+        self.exclusions = [] if exclusions is None else exclusions
     
     def generate_fragments(self, clazz: CPPClass | Enum, namespace: str = "") -> CPPCodeFragments:
-        if type(clazz) != CPPClass:
-            raise Exception("CPPToNlohmannJsonGenerator only supports code generation for CPPClass")
+        assert_type(clazz, CPPClass)
+        
+        if clazz.class_type in self.exclusions:
+            return CPPCodeFragments()
         
         templated_fields = [field for field in clazz.fields if issubclass(type(field.type), CPPTemplatedType) and not field.static]
 

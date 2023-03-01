@@ -10,20 +10,24 @@ from classgen.cassert import assert_one_of_types
 
 
 _SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
-_MAIN_TEMPLATE_PATH = f'{_SCRIPT_PATH}/cpp_to_json_string_template.jinja2'
-_STD_TEMPLATE_PATH = f'{_SCRIPT_PATH}/cpp_to_json_string_std_to_string_template.jinja2'
+_MAIN_TEMPLATE_PATH = f'{_SCRIPT_PATH}/to_debug_json_string_template.jinja2'
+_STD_TEMPLATE_PATH = f'{_SCRIPT_PATH}/to_debug_json_string_std_to_string_template.jinja2'
 
-class CPPToJsonStringGenerator(CPPJinjaCodeGenerator, CPPCodeFragmentsGenerator):
+class CPPToDebugJsonStringGenerator(CPPJinjaCodeGenerator, CPPCodeFragmentsGenerator):
 
-    def __init__(self, function_name: str = "toJsonString", all_defined_classes: dict[str, CPPClass] = None) -> None:
+    def __init__(self, function_name: str = "toDebugJsonString", all_defined_classes: dict[str, CPPClass] = None, exclusions: list[type] = None) -> None:
         super().__init__()
         self.function_name = function_name
         self.main_template = self.load_template("main", _MAIN_TEMPLATE_PATH)
         self.std_template = self.load_template("std", _STD_TEMPLATE_PATH)
         self.all_defined_classes = [] if all_defined_classes is None else all_defined_classes
+        self.exclusions = [] if exclusions is None else exclusions
 
     def generate_fragments(self, clazz: Class | CPPClass | Enum, namespace: str = "") -> CPPCodeFragments:
         assert_one_of_types(clazz, [CPPClass, Enum])
+
+        if type(clazz) == CPPClass and clazz.class_type in self.exclusions:
+            return CPPCodeFragments()
         
         templated_fields = [field for field in clazz.fields if issubclass(type(field.type), CPPTemplatedType) and not field.static]
 

@@ -21,14 +21,8 @@ bool templateRichDataTest() {
             { { 200, std::set<int64_t>{4, 5, 6}} }
         }
     };
-    data.toJsonString();
-    data.toNlohmannJson();
-
-    std::cout << data.toJsonString() << std::endl;
-    std::cout << data.toNlohmannJson().dump(2) << std::endl;
-
-    assertException(data.toJsonString().size() > 0, "TemplateRichData->toJsonString() :: empty string");
-
+    std::cout << data.toDebugJsonString() << std::endl;
+    assertException(data.toDebugJsonString().size() > 0, "TemplateRichData->toDebugJsonString() :: empty string");
     return true;
 }
 
@@ -61,7 +55,7 @@ bool importantDataTest() {
     };
 
     try {
-        auto toJsonJson = nlohmann::json::parse(data.toJsonString());
+        auto toJsonJson = nlohmann::json::parse(data.toDebugJsonString());
         ensureImportantDataState(toJsonJson);
     } catch(const std::exception& e) {
         std::cerr << e.what() << ": \n toJsonString() malformed \n";
