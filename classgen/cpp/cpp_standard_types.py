@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 from classgen.cpp.cpp_type import CPPType
-from classgen.utils import assert_type
+from classgen.cassert import assert_type
 
 @dataclass(frozen = True)
 class CPPINT8(CPPType):
@@ -147,43 +147,63 @@ def is_standard_type(_type: type) -> bool:
 
     return _type in NORMAL_SET
 
+def is_templated_typealias(_type: type) -> bool:
+    return hasattr(_type, '__origin__') and hasattr(_type, '__args__')
+
 def is_templated_type(_type: type) -> bool:
-    if hasattr(_type, '__origin__') == False or hasattr(_type, '__args__') == False:
-        return False
-    
     TEMPLATED_SET = {
         CPPVector,
         CPPMap,
         CPPSet
     }
 
-    return _type.__origin__ in TEMPLATED_SET
+    if is_templated_typealias(_type):
+        return _type.__origin__ in TEMPLATED_SET
+    
+    assert_type(_type, type)
 
-def extract_templated_type(_type: type) -> CPPTemplatedType:
+    if _type in TEMPLATED_SET:
+        return True
+
+    return False
+
+
+# Const = TypeVar("Const")
+# Constexpr = TypeVar("Constexpr")
+# Static = TypeVar("Static")
+
+def _extract_templated_type_or_get_simple(_type: type) -> CPPTemplatedType:
     if is_templated_type(_type) == False:
-        raise Exception("Not valid templated type")
+        return _type()
 
     base_class = _type.__origin__
     templated_classes = _type.__args__
 
+    templated_arguments: list[CPPType] = []
+    for templated_class in templated_classes:
+        templated_arguments.append(_extract_templated_type_or_get_simple(templated_class))
+
     if base_class == CPPMap:
         if len(templated_classes) != 2:
             raise Exception('CPPMap requires 2 arguments')
-        return CPPMap(templated_classes[0](), templated_classes[1]())
+        return CPPMap(templated_arguments[0], templated_arguments[1])
     
     if base_class == CPPVector:
         if len(templated_classes) != 1:
             raise Exception('CPPVector requires 1 arguments')
-        return CPPVector(templated_classes[0]())
+        return CPPVector(templated_arguments[0])
     
     if base_class == CPPSet:
         if len(templated_classes) != 1:
             raise Exception('CPPSet requires 1 arguments')
-        return CPPSet(templated_classes[0]())
+        return CPPSet(templated_arguments[0])
 
     raise Exception("NOT HANDLED GENERIC") 
 
-
+def extract_templated_type(_type: type) -> CPPTemplatedType:
+    if is_templated_type(_type) == False:
+        raise Exception("Not valid templated type")
+    return _extract_templated_type_or_get_simple(_type)
 
 def from_python_type(_type: type) -> CPPType:
     value = {

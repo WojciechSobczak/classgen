@@ -12,6 +12,11 @@ class FocusData:
     focus_checked: CPPBool
     dbData: DatabaseData
 
+#More experimental than normal use case
+class TemplateRichData:
+    convoluted_unreal: CPPMap[CPPMap[CPPString, CPPDouble], CPPMap[CPPUINT8, CPPSet[CPPString]]]
+    convoluted_real: CPPMap[CPPSet[CPPString], CPPMap[CPPUINT8, CPPSet[CPPINT64]]]
+
 class ImportantData:
     id: CPPString = FD(access=CPPAccessModifier.PRIVATE)
     name: CPPStringView = FD(access=CPPAccessModifier.PROTECTED)
@@ -31,6 +36,7 @@ class ImportantData:
 
     countries: CPPSet[CPPString]
     focus_data: FocusData
+    
 
 
 

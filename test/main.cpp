@@ -4,12 +4,32 @@
 
 #define private public
 #include "generated/ImportantData.hpp"
+#include "generated/TemplateRichData.hpp"
 #undef private
 
 void assertException(const bool assertion, const std::string_view message = "assertion failed") {
     if (assertion == false) {
         throw std::runtime_error(std::string(message));
     }
+}
+
+bool templateRichDataTest() {
+    auto data = Veracruz::TemplateRichData();
+    data.convoluted_real = {
+        {
+            std::set<std::string>{"1", "2", "3"}, 
+            { { 200, std::set<int64_t>{4, 5, 6}} }
+        }
+    };
+    data.toJsonString();
+    data.toNlohmannJson();
+
+    std::cout << data.toJsonString() << std::endl;
+    std::cout << data.toNlohmannJson().dump(2) << std::endl;
+
+    assertException(data.toJsonString().size() > 0, "TemplateRichData->toJsonString() :: empty string");
+
+    return true;
 }
 
 bool importantDataTest() {
@@ -72,8 +92,13 @@ bool importantDataTest() {
 }
 
 int main(int args, char** argv, char** env) {
-    if (importantDataTest() == false) {
-        return -1;
+    try {
+        templateRichDataTest();
+        if (importantDataTest() == false) {
+            return -1;
+        }
+    } catch(const std::exception& e) {
+        std::cerr << e.what() << '\n';
     }
     return 0;
 }

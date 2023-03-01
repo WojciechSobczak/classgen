@@ -4,7 +4,7 @@ from classgen.cpp.cpp_enum import CPPEnum
 from classgen.cpp.generators.cpp_class_code_generator import CPPClassCodeGenerator
 from classgen.cpp.generators.cpp_code_fragments_generator import CPPCodeFragmentsGenerator
 from classgen.cpp.generators.cpp_enum_code_generator import CPPEnumCodeGenerator
-from classgen.utils import assert_one_of
+from classgen.cassert import assert_one_of_types
 
 class CPPCodeGenerator:
 
@@ -13,7 +13,7 @@ class CPPCodeGenerator:
         self.additional_generators = [] if additional_generators is None else additional_generators
 
     def generate_code(self, clazz: Class | CPPClass | CPPEnum, namespace: str = "") -> str:
-        assert_one_of(clazz, [CPPClass, CPPEnum])
+        assert_one_of_types(clazz, [CPPClass, CPPEnum])
 
         if type(clazz) == CPPClass:
             generator = CPPClassCodeGenerator(namespace=namespace)

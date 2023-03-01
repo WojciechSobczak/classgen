@@ -1,15 +1,14 @@
 import dataclasses
 import os
 import jinja2
-from classgen.common import Class, Field
 from classgen.cpp.cpp_class import CPPClass
 from classgen.cpp.cpp_access_modifier import CPPAccessModifier
 from classgen.cpp.cpp_field import CPPField
 from classgen.cpp.cpp_type import CPPType
-from classgen.cpp.cpp_standard_types import is_standard_type
+from classgen.cpp.cpp_standard_types import CPPTemplatedType, is_standard_type, is_templated_type
 from classgen.cpp.generators.cpp_code_fragments_generator import CPPCodeFragments, CPPCodeFragmentsGenerator
 from classgen.cpp.generators.cpp_jinja_code_generator import CPPJinjaCodeGenerator
-from classgen.utils import assert_type
+from classgen.cassert import assert_type
 
 
 _SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -48,16 +47,35 @@ class CPPClassCodeGenerator(CPPJinjaCodeGenerator):
     def generate_code(self, clazz: CPPClass, additional_generators: list[CPPCodeFragmentsGenerator]) -> str:
         assert_type(clazz, CPPClass)
 
+        def extract_all_types(field_or_type: CPPField | CPPType) -> list[CPPType]:
+            output: list[CPPType] = []
+            if type(field_or_type) == CPPField:
+                field: CPPField = field_or_type
+                output += extract_all_types(field.type)
+                return output
+            elif issubclass(type(field_or_type), CPPType):
+                cpp_type: CPPType = field_or_type
+                if is_templated_type(type(cpp_type)):
+                    templated_type: CPPTemplatedType = cpp_type
+                    output.append(templated_type)
+                    for arg in templated_type.args:
+                        output += extract_all_types(arg)
+                else:
+                    output.append(cpp_type)
+                return output
+            else:
+                raise Exception("extract_all_types(): UNEXPECTED TYPE")
+
+
         class_fragments = CPPCodeFragments()
         for field in clazz.fields:
-            field: CPPField = field
-            if not issubclass(type(field.type), CPPType):
-                raise Exception("ONLY CPP TYPES PLS")
-            
-            if is_standard_type(type(field.type)) and field.type.include_path is not None:
-                class_fragments.dependencies.standard_includes.append(field.type.include_path)
-            elif field.type.include_path is not None:
-                class_fragments.dependencies.quoted_includes.append(field.type.include_path)
+            all_fields_types = extract_all_types(field)
+            for field_type in all_fields_types:
+                if field_type.include_path is not None:
+                    includes = class_fragments.dependencies.quoted_includes
+                    if is_standard_type(type(field_type)):
+                        includes = class_fragments.dependencies.standard_includes
+                    includes.append(field_type.include_path)
 
         for generator in additional_generators:
             if not issubclass(type(generator), CPPCodeFragmentsGenerator):

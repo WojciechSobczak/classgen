@@ -3,11 +3,11 @@
 from classgen.common import Class, Field
 from classgen.cpp.cpp_class import CPPClass
 from classgen.cpp.cpp_field import CPPField
-from classgen.utils import assert_one_of
+from classgen.cassert import assert_one_of_types
 
 
 def extract_cpp_fields(clazz: Class | CPPClass) -> list[CPPField]:
-    assert_one_of(clazz, [Class, CPPClass])
+    assert_one_of_types(clazz, [Class, CPPClass])
 
     class_fields: list[CPPField] = []
     if type(clazz) == Class:

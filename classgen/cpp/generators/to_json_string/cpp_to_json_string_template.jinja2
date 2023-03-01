@@ -1,23 +1,24 @@
+{% set CONVERTER_SUFFIX = "_converter" %}
 {% macro value_to_string(field_type, field_name, this = True) %}
     {% set this = "this->" if this == True else "" %}
     {% set this_field = this + field_name %}
     {##}
     {% if is_numerical(field_type) %}
         {% if is_floating_point(field_type) %}
-            [](const double v) { const auto vs = std::to_string(v); return vs.find_first_of('.') != std::string::npos ? vs : vs + ".0"; }({{this_field}})
+            classgen::to_string({{this_field}})
         {% else %}
         {{this_field}}
         {% endif %}
     {% elif is_string(field_type) %}
         "\"" << {{this_field}} << "\""
     {% elif is_bool(field_type) %}
-        ({{this_field}} == true ? "true" : "false")
+        classgen::to_string({{this_field}})
     {% elif is_str_or_class(field_type) %}
         {{this_field}}.{{function_name}}()
     {% elif is_string_view(field_type) %}
         "\"" << {{this_field}} << "\""
     {% elif is_map(field_type) or is_set(field_type) %}
-        {{field_name}}
+        {{field_name}}{{CONVERTER_SUFFIX}}(indent, indent_size, {{field_name}}) 
     {% elif is_user_defined(field_type) %}
         {{this_field}}.{{function_name}}()
     {% else %}
@@ -28,17 +29,26 @@
 {##}
 {##}
 {##}
-{% macro map_to_lambda(map_type, map_name) %}
-[this](const std::string_view current_indent, const size_t indent_size) -> std::string {
+{% macro generate_map_converter_lambda(map_type, lambda_prefix) %}
+constexpr auto {{lambda_prefix}}{{CONVERTER_SUFFIX}} = [](const std::string_view current_indent, const size_t indent_size, const {{format_field_type(map_type)}}& map_arg_name) -> std::string {
     const std::string indent = std::string(current_indent) + std::string(current_indent);
     std::stringstream result;
     result << "{\n";
     size_t loop_index = 0;
-    for (const auto& [key, value] : this->{{map_name}}) {
+    {##}
+    {% if is_templated(map_type.key_type) %}
+    {{generate_templated_type_converter_lambda(map_type.key_type, "key")|indent(4, False)}}
+    {% endif %}
+    {##}
+    {% if is_templated(map_type.value_type) %}
+    {{generate_templated_type_converter_lambda(map_type.value_type, "value")|indent(4, False)}}
+    {% endif %}
+    {##}
+    for (const auto& [key, value] : map_arg_name) {
         result << indent << {{value_to_string(map_type.key_type, 'key', False)|trim}};
         result << " : ";
         result << {{value_to_string(map_type.value_type, 'value', False)|trim}};
-        if (loop_index++ != this->{{map_name}}.size() - 1) {
+        if (loop_index++ != map_arg_name.size() - 1) {
             result << ",\n";
         } else {
             result << "\n";
@@ -47,7 +57,7 @@
     result << current_indent;
     result << "}";
     return result.str();
-}(indent, indent_size)
+};
 {% endmacro %}
 {##}
 {##}
@@ -55,14 +65,14 @@
 {##}
 {##}
 {% macro set_to_lambda(set_type, set_name) %}
-[this](const std::string_view current_indent, const size_t indent_size) -> std::string {
+constexpr auto {{set_name}}{{CONVERTER_SUFFIX}} = [](const std::string_view current_indent, const size_t indent_size, const {{format_field_type(set_type)}}& set_arg_name) -> std::string {
     const std::string indent = std::string(current_indent) + std::string(current_indent);
     std::stringstream result;
     result << "[\n";
     size_t loop_index = 0;
-    for (const auto& value : this->{{set_name}}) {
+    for (const auto& value : set_arg_name) {
         result << indent << {{value_to_string(set_type.value_type, 'value', False)|trim}};
-        if (loop_index++ != this->{{set_name}}.size() - 1) {
+        if (loop_index++ != set_arg_name.size() - 1) {
             result << ",\n";
         } else {
             result << "\n";
@@ -71,18 +81,18 @@
     result << current_indent;
     result << "]";
     return result.str();
-}(indent, indent_size)
+};
 {% endmacro %}
 {##}
 {##}
 {##}
-{% macro generate_templated_type_lambda(field) %}
-{% if is_map(field) %}
-{{map_to_lambda(field.type, field.name)|trim}}
-{% elif is_set(field) %}
-{{set_to_lambda(field.type, field.name)|trim}}
+{% macro generate_templated_type_converter_lambda(templated_type, converter_var_name_prefix) %}
+{% if is_map(templated_type) %}
+{{generate_map_converter_lambda(templated_type, converter_var_name_prefix)|trim}}
+{% elif is_set(templated_type) %}
+{{set_to_lambda(templated_type, converter_var_name_prefix)|trim}}
 {% else %}
-NON IMPLEMENTED FIELD IN TO TEMPLATE TO STRING GENERATOR
+NON IMPLEMENTED FIELD IN generate_templated_type_converter_lambda
 {% endif %}
 {% endmacro %}
 {##}
@@ -92,8 +102,8 @@ NON IMPLEMENTED FIELD IN TO TEMPLATE TO STRING GENERATOR
 std::string {{function_name}}(const size_t indent_size = {{default_indent_size}}) const {
     const std::string indent(indent_size, ' ');
 
-    {% for field in templated_fields %}
-    const std::string {{field.name}} = {{ generate_templated_type_lambda(field)|indent(4)|trim}};
+    {% for field in all_fields if is_templated(field.type) %}
+    {{ generate_templated_type_converter_lambda(field.type, field.name)|indent(4)|trim}};
 
     {% endfor %}
     std::stringstream result;

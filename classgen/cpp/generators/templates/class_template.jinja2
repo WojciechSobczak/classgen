@@ -21,17 +21,6 @@
 
 {{ paste_fragments_codes(fragments.before_namespace_fragments) }}
 
-{% macro format_field_type(field_type) %}
-{% if not is_templated(field_type) %} 
-    {{- field_type.name -}}
-{% else %}
-{% set arguments = [] %}
-{% for arg in field_type.args %}
-    {{- arguments.append(arg.name) or "" -}}
-{% endfor %}
-    {{- field_type.name -}}{{- '<' ~ arguments|join(', ') ~ '>' -}}
-{% endif %}
-{% endmacro %}
 {##}
 {##}
 {##}
@@ -82,5 +71,6 @@ public:
 {%- if namespace|length > 0 -%}
 }
 {%- endif %}
+
 
 {{paste_fragments_codes(fragments.out_namespace_fragments)}}

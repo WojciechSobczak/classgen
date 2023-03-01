@@ -70,11 +70,10 @@ def extract_classes(classes_directory: str, calling_script_path: str) -> list[Cl
         module_path = file_path[len(calling_script_path) + 1::]
         module_path = module_path.replace('.py', '')
         module_path = module_path.replace('/', '.')
-        if module_path == 'data_classes.important_data':
-            module: ModuleType = __import__(module_path, fromlist=['object'])
-            for module_element in dir(module):
-                if module_element in our_classes:
-                    types_to_create_classes_from.append(getattr(module, module_element))
+        module: ModuleType = __import__(module_path, fromlist=['object'])
+        for module_element in dir(module):
+            if module_element in our_classes:
+                types_to_create_classes_from.append(getattr(module, module_element))
 
     
     extracted_classes: list[Class] = []

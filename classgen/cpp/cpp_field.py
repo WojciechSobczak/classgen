@@ -3,8 +3,14 @@ from classgen.common import Field, FieldDescriptor
 from classgen.cpp.cpp_access_modifier import CPPAccessModifier
 from classgen.cpp.cpp_field_descriptor import CPPFieldDescriptor
 from classgen.cpp.cpp_type import CPPType
-from classgen.cpp.cpp_standard_types import CPPDouble, CPPMap, CPPString, CPPTemplatedType, extract_templated_type, from_python_type, is_python_type, is_standard_type, is_templated_type
-from classgen.utils import assert_type
+from classgen.cpp.cpp_standard_types import (
+    extract_templated_type, 
+    from_python_type, 
+    is_python_type, 
+    is_standard_type, 
+    is_templated_type
+)
+from classgen.cassert import assert_type
 
 @dataclasses.dataclass
 class CPPField:

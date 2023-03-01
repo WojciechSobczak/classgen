@@ -6,7 +6,7 @@ from classgen.cpp.cpp_standard_types import CPPTemplatedType
 from classgen.cpp.generators.cpp_code_fragments_generator import CPPCodeFragments, CPPCodeFragmentsGenerator
 from classgen.cpp.generators.cpp_jinja_code_generator import CPPJinjaCodeGenerator
 from classgen.enum import Enum
-from classgen.utils import assert_one_of
+from classgen.cassert import assert_one_of_types
 
 
 _SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -23,7 +23,7 @@ class CPPToJsonStringGenerator(CPPJinjaCodeGenerator, CPPCodeFragmentsGenerator)
         self.all_defined_classes = [] if all_defined_classes is None else all_defined_classes
 
     def generate_fragments(self, clazz: Class | CPPClass | Enum, namespace: str = "") -> CPPCodeFragments:
-        assert_one_of(clazz, [CPPClass, Enum])
+        assert_one_of_types(clazz, [CPPClass, Enum])
         
         templated_fields = [field for field in clazz.fields if issubclass(type(field.type), CPPTemplatedType) and not field.static]
 
@@ -44,6 +44,8 @@ class CPPToJsonStringGenerator(CPPJinjaCodeGenerator, CPPCodeFragmentsGenerator)
         result = CPPCodeFragments()
         for include in ["sstream", "iomanip"]:
             result.dependencies.standard_includes.append(include)
+
+        result.dependencies.libraries_includes.append("classgen/classgen.hpp")
 
         result.in_class_fragments.append(in_class_text)
         result.out_namespace_fragments.append(out_namespace_text)
