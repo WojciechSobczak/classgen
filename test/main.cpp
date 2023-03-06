@@ -65,38 +65,38 @@ bool importantDataTest() {
     data.size = UINT_MAX;
 
     try {
-        std::cout << std::string('-', 80) << std::endl;
+        std::cout << std::string(80, '-') << std::endl;
         std::cout << data.toDebugJsonString() << std::endl;
-        std::cout << std::string('-', 80) << std::endl;
+        std::cout << std::string(80, '-') << std::endl;
     } catch(const std::exception& e) {
         std::cerr << e.what() << ": \n toDebugJsonString() malformed \n";
         return false;
     }
 
-    // try {
-    //     std::cout << std::string('-', 80) << std::endl;
-    //     std::cout << std::to_string(data) << std::endl;
-    //     std::cout << std::string('-', 80) << std::endl;
-    // } catch(const std::exception& e) {
-    //     std::cerr << e.what() << ": \n std::to_string() malformed \n";
-    //     return false;
-    // }
+    try {
+        std::cout << std::string(80, '-') << std::endl;
+        std::cout << std::to_string(data) << std::endl;
+        std::cout << std::string(80, '-') << std::endl;
+    } catch(const std::exception& e) {
+        std::cerr << e.what() << ": \n std::to_string() malformed \n";
+        return false;
+    }
 
-    // try {
-    //     auto json = data.toNlohmannJson();
-    //     std::cout << std::string('-', 80) << std::endl;
-    //     std::cout << json.dump(2) << std::endl;
-    //     std::cout << std::string('-', 80) << std::endl;
+    try {
+        auto json = data.toNlohmannJson();
+        std::cout << std::string(80, '-') << std::endl;
+        std::cout << json.dump(2) << std::endl;
+        std::cout << std::string(80, '-') << std::endl;
         
-    //     assertException(json["countries"].is_array(), "ImportantData->countries :: Type mismatch");
-    //     assertException(json["cost_money_map"].is_object(), "ImportantData->cost_money_map :: Type mismatch");
-    //     assertException(json["cost_currency_map"].is_object(), "ImportantData->cost_currency_map :: Type mismatch");
-    //     assertException(json["length"].is_number_float(), "ImportantData->length :: Type mismatch");
-    //     assertException(json["size"].is_number_integer(), "ImportantData->size :: Type mismatch");
-    // } catch(const std::exception& e) {
-    //     std::cerr << e.what() << ": \n toDebugJsonString() malformed \n";
-    //     return false;
-    // }
+        assertException(json["countries"].is_array(), "ImportantData->countries :: Type mismatch");
+        assertException(json["cost_money_map"].is_object(), "ImportantData->cost_money_map :: Type mismatch");
+        assertException(json["cost_currency_map"].is_object(), "ImportantData->cost_currency_map :: Type mismatch");
+        assertException(json["length"].is_number_float(), "ImportantData->length :: Type mismatch");
+        assertException(json["size"].is_number_integer(), "ImportantData->size :: Type mismatch");
+    } catch(const std::exception& e) {
+        std::cerr << e.what() << ": \n toDebugJsonString() malformed \n";
+        return false;
+    }
 
     return true;
 }

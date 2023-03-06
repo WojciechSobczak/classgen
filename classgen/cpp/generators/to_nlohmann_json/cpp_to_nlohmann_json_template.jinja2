@@ -53,9 +53,13 @@ constexpr auto {{converter_prefix}}{{CONVERTER_SUFFIX}} = []({{format_field_type
 {##}
 {% macro generate_set_converter_lambda(set_type, converter_prefix) %}
 constexpr auto {{converter_prefix}}{{CONVERTER_SUFFIX}} = []({{format_field_type(set_type)}} set_arg_name) -> nlohmann::json {
+    {% if is_templated(set_type.value_type) %}
+    {{generate_templated_type_converter_lambda(set_type.value_type, "value")|indent(4, False)}}
+    {% endif %}
+
     nlohmann::json json = nlohmann::json::array();
     for (const auto& value : set_arg_name) {
-        json.push_back(value);
+        json.push_back({{value_to_json(set_type.value_type, 'value', False)|trim}});
     }
     return json;
 };
