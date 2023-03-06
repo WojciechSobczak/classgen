@@ -1,13 +1,19 @@
 import os
 import shutil
 import sys
-from data_classes.important_data import TemplateRichData
+
 import utils
+
+from data_classes.important_data import TemplateRichData
+from data_classes.important_data import ImportantData
+from data_classes.important_data import FocusData
+from data_classes.important_data import DatabaseData
+
 import classgen
 import classgen.cpp
 from classgen.common import extract_classes
 from classgen.cpp.generators.cpp_class_converter import convert_classes_to_cppclasses
-from classgen.cpp.generators.to_json_string.cpp_to_debug_json_string_generator import CPPToDebugJsonStringGenerator
+from classgen.cpp.generators.to_debug_string.cpp_to_debug_string_generator import CPPToDebugJsonStringGenerator
 from classgen.cpp.generators.to_nlohmann_json.cpp_to_nlohmann_json_generator import CPPToNlohmannJsonGenerator
 
 
@@ -21,8 +27,8 @@ classes = convert_classes_to_cppclasses(classes)
 all_defined_classes= {clazz.name: clazz for clazz in classes} 
 
 code_generator = classgen.cpp.CPPCodeGenerator([
-    CPPToDebugJsonStringGenerator(all_defined_classes = all_defined_classes, exclusions=[]),
-    CPPToNlohmannJsonGenerator(all_defined_classes = all_defined_classes, exclusions=[TemplateRichData])
+    CPPToDebugJsonStringGenerator(all_defined_classes = all_defined_classes, inclusions={ImportantData, FocusData, DatabaseData}),
+    CPPToNlohmannJsonGenerator(all_defined_classes = all_defined_classes, exclusions={TemplateRichData})
 ])
 
 utils.remove_directory(GENERATED_DIR)

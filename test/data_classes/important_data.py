@@ -35,6 +35,7 @@ class ImportantData:
     cost_currency_map: CPPMap[CPPString, CPPString]
 
     countries: CPPSet[CPPString]
+    countries_of_continents: CPPSet[CPPSet[CPPSet[CPPString]]]
     focus_data: FocusData
     
 

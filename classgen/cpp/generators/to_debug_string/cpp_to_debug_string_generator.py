@@ -10,32 +10,37 @@ from classgen.cassert import assert_one_of_types
 
 
 _SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
-_MAIN_TEMPLATE_PATH = f'{_SCRIPT_PATH}/to_debug_json_string_template.jinja2'
-_STD_TEMPLATE_PATH = f'{_SCRIPT_PATH}/to_debug_json_string_std_to_string_template.jinja2'
+_MAIN_TEMPLATE_PATH = f'{_SCRIPT_PATH}/to_debug_string_template.jinja2'
+_STD_TEMPLATE_PATH = f'{_SCRIPT_PATH}/to_debug_string_stdtostring_template.jinja2'
 
 class CPPToDebugJsonStringGenerator(CPPJinjaCodeGenerator, CPPCodeFragmentsGenerator):
 
-    def __init__(self, function_name: str = "toDebugJsonString", all_defined_classes: dict[str, CPPClass] = None, exclusions: list[type] = None) -> None:
-        super().__init__()
+    def __init__(self, 
+        function_name: str = "toDebugJsonString", 
+        exclusions: list[Class] = None, 
+        inclusions: list[Class] = None, 
+        all_defined_classes: dict[str, CPPClass] = None
+    )-> None:
+        CPPJinjaCodeGenerator.__init__(self)
+        CPPCodeFragmentsGenerator.__init__(self, 
+            exclusions = exclusions,
+            inclusions = inclusions,
+            all_defined_classes = all_defined_classes
+        )
         self.function_name = function_name
         self.main_template = self.load_template("main", _MAIN_TEMPLATE_PATH)
         self.std_template = self.load_template("std", _STD_TEMPLATE_PATH)
-        self.all_defined_classes = [] if all_defined_classes is None else all_defined_classes
-        self.exclusions = [] if exclusions is None else exclusions
 
     def generate_fragments(self, clazz: Class | CPPClass | Enum, namespace: str = "") -> CPPCodeFragments:
         assert_one_of_types(clazz, [CPPClass, Enum])
-
-        if type(clazz) == CPPClass and clazz.class_type in self.exclusions:
+        if not self.is_included(clazz):
             return CPPCodeFragments()
         
-        templated_fields = [field for field in clazz.fields if issubclass(type(field.type), CPPTemplatedType) and not field.static]
-
         in_class_text = self.main_template.template.render(
             function_name = self.function_name,
-            templated_fields = templated_fields,
             all_fields = clazz.fields,
-            default_indent_size = 4
+            default_indent_size = 4,
+            class_name = clazz.name
         )
 
         out_namespace_text = self.std_template.template.render(
